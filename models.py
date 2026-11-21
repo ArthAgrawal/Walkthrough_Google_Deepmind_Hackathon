@@ -115,12 +115,19 @@ def _status_of(exc: Exception) -> int | None:
 
 
 def _is_retryable(exc: Exception) -> bool:
-    """True for transient failures: 408/429/5xx, or network/timeout errors with no status."""
+    """True for transient failures: 408/429/5xx, or network errors with no status.
+
+    Client-side timeouts are NOT retried: a slow model won't get faster, and callers fall back.
+    """
+    if getattr(exc, "status", None) == "DEADLINE_EXCEEDED":   # our own deadline (server-side 504)
+        return False
     status = _status_of(exc)
     if status is not None:
         return status in config.RETRY_STATUS_CODES
     name = type(exc).__name__.lower()
-    return any(s in name for s in ("timeout", "connect", "network", "transport", "remoteprotocol"))
+    if "timeout" in name:
+        return False
+    return any(s in name for s in ("connect", "network", "transport", "remoteprotocol"))
 
 
 def _call_with_retry(fn: Callable[[], Any], record: dict) -> Any:
@@ -151,9 +158,9 @@ def _call_with_retry(fn: Callable[[], Any], record: dict) -> Any:
 
 # ---------------------------------------------------------------- text models
 
-def _with_thinking(config_: types.GenerateContentConfig | dict | None,
-                   thinking: str | None) -> types.GenerateContentConfig:
-    """Return a GenerateContentConfig with thinking_level set, unless the caller already set one."""
+def _with_thinking(config_: types.GenerateContentConfig | dict | None, thinking: str | None,
+                   timeout_s: float | None) -> types.GenerateContentConfig:
+    """Return a GenerateContentConfig with thinking_level and request timeout set (caller's values win)."""
     if config_ is None:
         cfg = types.GenerateContentConfig()
     elif isinstance(config_, dict):
@@ -162,19 +169,23 @@ def _with_thinking(config_: types.GenerateContentConfig | dict | None,
         cfg = config_.model_copy(deep=True)
     if thinking and cfg.thinking_config is None:
         cfg.thinking_config = types.ThinkingConfig(thinking_level=thinking)
+    if timeout_s and cfg.http_options is None:
+        cfg.http_options = types.HttpOptions(timeout=int(timeout_s * 1000))
     return cfg
 
 
 def generate(model: str, contents: Any, config_: types.GenerateContentConfig | dict | None = None,
-             step: str = "", thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
+             step: str = "", thinking: str | None = config.THINKING_DEFAULT,
+             timeout_s: float | None = config.CALL_TIMEOUT_S) -> types.GenerateContentResponse:
     """Call a text/multimodal Gemini model (HYDROGEN/NEON/CARBON) with retry + logging.
 
     `thinking` sets ThinkingConfig.thinking_level (MINIMAL/LOW/MEDIUM/HIGH/XHIGH); defaults to
     config.THINKING_DEFAULT. Pass thinking=None to use the model's own default.
     A thinking_config already inside `config_` wins over `thinking`.
+    `timeout_s` bounds one request; timeouts raise without retry.
     """
     client = get_client()
-    config_ = _with_thinking(config_, thinking)
+    config_ = _with_thinking(config_, thinking, timeout_s)
     record = {"ts": datetime.now(timezone.utc).isoformat(), "kind": "generate", "step": step,
               "model": model, "prompt": contents, "config": config_}
     resp = _call_with_retry(
@@ -202,9 +213,10 @@ def neon(contents: Any, config_=None, step: str = "",
 
 
 def carbon(contents: Any, config_=None, step: str = "",
-           thinking: str | None = config.THINKING_CARBON) -> types.GenerateContentResponse:
-    """Hard-cases model: re-checks uncertain findings (higher thinking by default)."""
-    return generate(config.CARBON, contents, config_, step, thinking)
+           thinking: str | None = config.THINKING_CARBON,
+           timeout_s: float | None = config.CARBON_TIMEOUT_S) -> types.GenerateContentResponse:
+    """Hard-cases model: re-checks uncertain findings (higher thinking, bounded by a timeout)."""
+    return generate(config.CARBON, contents, config_, step, thinking, timeout_s)
 
 
 def parse_json(resp: types.GenerateContentResponse) -> Any:

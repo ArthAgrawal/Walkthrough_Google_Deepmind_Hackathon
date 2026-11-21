@@ -15,8 +15,11 @@ API_VERSION = "v1beta"            # Decisions API requires v1beta
 
 # Thinking levels (google-genai ThinkingLevel: MINIMAL, LOW, MEDIUM, HIGH, XHIGH).
 # LOW by default for speed (Neon at its default took ~13 s for "pong"); Carbon re-checks think harder.
+# Measured on one re-check (3-6 frames): HIGH 265 s, MEDIUM 17 s, LOW 4.5 s, all the same verdict.
 THINKING_DEFAULT = "LOW"
-THINKING_CARBON = "HIGH"
+THINKING_CARBON = "MEDIUM"
+CALL_TIMEOUT_S = 90               # per text-model request; timeouts are not retried
+CARBON_TIMEOUT_S = 45             # Carbon re-check; on timeout the finding goes to "film again"
 
 # Decisions API image resolution for per-frame checks
 FRAME_RESOLUTION = "low"
@@ -32,6 +35,33 @@ OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 MERGE_GAP_S = 2.0                 # frames this close (same rule) merge into one finding
 MIN_CEILING_FRAMES = 2            # SMOKE_CO needs this many clear ceiling frames before flagging
 THERMOSTAT_MIN_P = 0.70           # step 5: read thermostat only if a frame has P(visible) >= this
+
+# --- Classify / route / verify (steps 8-11) ---
+# Fixed HPD-style category list for now (option key -> description for the Decisions choice).
+# TODO: replace with the distinct category values from the HPD dataset (PLAN.md Section 8).
+HPD_CATEGORIES = {
+    "HEAT/HOT WATER": "No heat, low heat, or no hot water.",
+    "DOOR/WINDOW": "Windows, window guards, doors, locks.",
+    "WATER LEAK": "Leaks, drips, water stains or water damage.",
+    "PLUMBING": "Pipes, toilets, sinks, drains, fixtures.",
+    "PAINT/PLASTER": "Peeling or flaking paint, damaged plaster, possible lead paint.",
+    "UNSANITARY CONDITION": "Mold, pests, garbage, unsanitary surfaces.",
+    "SAFETY": "Smoke or carbon monoxide detectors, fire safety, other hazards.",
+    "ELECTRIC": "Wiring, outlets, lighting.",
+    "GENERAL": "Other housing maintenance conditions.",
+}
+# Likely severity (score levels 0..2). We never output official HPD classes.
+SEVERITY_LEVELS = [
+    "non-hazardous: minor condition that should be fixed (e.g. small area of peeling paint, old stain)",
+    "hazardous: affects health or safety (e.g. active leak, mold patch, low daytime heat)",
+    "immediately hazardous: urgent danger (e.g. no window guard where a young child lives, "
+    "no heat at night, peeling paint where a child under 6 lives)",
+]
+SEVERITY_NAMES = ["non-hazardous", "hazardous", "immediately hazardous"]
+CARBON_WINDOW_S = 5.0             # Carbon re-checks frames within ±5 s of a finding
+CARBON_MAX_FRAMES = 3             # at most this many frames sent to Carbon per re-check
+CARBON_MAX_PER_CLIP = 2           # budget: more uncertain findings than this go to "film again"
+VERIFY_MIN_P = 0.50               # claims with P(supported) below this are removed from the draft
 
 # --- Thresholds ---
 CONF_HIGH = 0.70   # include finding

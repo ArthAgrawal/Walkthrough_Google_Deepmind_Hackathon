@@ -26,8 +26,19 @@ SOURCE_BY_RULE = {
     "HEAT_NIGHT": SOURCES["HEAT"],
     "SMOKE_CO": SOURCES["HEAT_SEASON_INSPECTION"],
     "PEELING_PAINT": SOURCES["HEAT_SEASON_INSPECTION"],
-    "LEAK": None,   # PLAN.md gives no official source yet
-    "MOLD": None,   # PLAN.md gives no official source yet
+    "LEAK": "https://www.nyc.gov/site/hpd/news/030-25/stay-informed-stay-connected-nyc-city-agencies-target-hidden-asthma-risks-inside-home",
+    "MOLD": "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page",
+}
+
+# Plain-English names, used by Carbon prompts, the complaint and the UI.
+RULE_LABELS = {
+    "WINDOW_GUARD": "window without a window guard",
+    "HEAT_DAY": "insufficient daytime heat",
+    "HEAT_NIGHT": "insufficient nighttime heat",
+    "SMOKE_CO": "smoke / carbon monoxide detector not seen",
+    "LEAK": "water leak or water damage",
+    "MOLD": "mold condition",
+    "PEELING_PAINT": "peeling paint",
 }
 
 # Per-frame evidence score for each visual rule, from Decisions probabilities.
@@ -104,26 +115,36 @@ def window_guard(frame_checks, household, transcript) -> list[dict]:
 
 
 def simple_condition(rule: str, frame_checks, household, transcript) -> list[dict]:
-    """LEAK / MOLD / PEELING_PAINT: the visible condition itself is the issue."""
+    """LEAK / MOLD / PEELING_PAINT: the visible condition itself is the issue.
+
+    MOLD also requires a building with 3+ apartments (Local Law 55); video-only mode assumes it.
+    """
     out = []
     for seg in merge_segments(frame_checks, FRAME_SCORES[rule]):
-        extra = {}
+        extra, v = {}, True
         if rule == "LEAK":
             why = "Water stain or active leak visible."
         elif rule == "MOLD":
             why = "Dark growth observed on a surface (condition observed; no health claim)."
+            if household is not None and not household["building_3plus_units"]:
+                v = False
+                why += " The building has fewer than 3 apartments, so Local Law 55 mold rules do not apply."
         else:
             why = "Peeling paint visible."
             if household is not None and household["child_under_6"]:
                 why += " A child under 6 lives here: possible lead-paint concern."
                 extra["lead_concern"] = True
         q = nearby_quote(transcript, seg["t_start"], seg["t_end"])
-        out.append(_finding(rule, seg, True, why, q, **extra))
+        out.append(_finding(rule, seg, v, why, q, **extra))
     return out
 
 
 def smoke_co(frame_checks, transcript) -> list[dict]:
-    """SMOKE_CO: ceiling clearly filmed in >= MIN_CEILING_FRAMES frames but no detector seen in ANY frame."""
+    """SMOKE_CO: ceiling clearly filmed in >= MIN_CEILING_FRAMES frames but no detector seen in ANY frame.
+
+    Never a violation: not seeing a detector in one clip proves nothing, so is_violation=None
+    and the tenant is asked to confirm (refilm/confirm list).
+    """
     usable = [f for f in frame_checks if f["usable"]]
     ceil = [f for f in usable if f["p"].get("ceiling_visible", 0) >= config.CONF_HIGH]
     if len(ceil) < config.MIN_CEILING_FRAMES:
@@ -138,9 +159,8 @@ def smoke_co(frame_checks, transcript) -> list[dict]:
     mean_ceil = sum(f["p"]["ceiling_visible"] for f in ceil) / len(ceil)
     seg = {"t_start": ceil[0]["t"], "t_end": ceil[-1]["t"], "evidence_frame": best["frame_path"],
            "confidence": mean_ceil * (1 - worst_seen)}
-    why = (f"No {' or '.join(missing)} detector seen on the ceilings filmed. "
-           "A detector may be elsewhere in the apartment; check before filing.")
-    return [_finding("SMOKE_CO", seg, True, why, nearby_quote(transcript, seg["t_start"], seg["t_end"]),
+    why = "No smoke/CO detector seen in this clip. It may be in another room; please confirm."
+    return [_finding("SMOKE_CO", seg, None, why, nearby_quote(transcript, seg["t_start"], seg["t_end"]),
                      missing=missing)]
 
 

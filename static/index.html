@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
+    --accent: #1f5fbf; --bad: #b3261e; --bad-bg: #fbeceb; --ok: #2e7d32; --ok-bg: #edf6ee;
+    --warn: #8a5a00; --warn-bg: #fdf4e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --card: #1f1f1d; --ink: #ecebe7; --muted: #a09e98; --line: #33322f;
+      --accent: #7aa7ff; --bad: #ff8a80; --bad-bg: #3a1f1d; --ok: #81c784; --ok-bg: #1d2e1e;
+      --warn: #ffcc80; --warn-bg: #33291a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 1.5rem; margin: 0 0 2px; }
+  h2 { font-size: 1.1rem; margin: 28px 0 10px; }
+  .tag { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+  button, .btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 10px 16px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; }
+  button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  video { width: 100%; max-height: 60vh; background: #000; border-radius: 10px; }
+  .prompt { font-weight: 600; margin: 0 0 12px; }
+  .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--bad);
+    margin-right: 6px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  details summary { cursor: pointer; color: var(--muted); }
+  textarea, input[type=text] { width: 100%; font: inherit; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  textarea.complaint { min-height: 320px; font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .stage { padding: 6px 0; color: var(--muted); }
+  .stage.done { color: var(--ink); }
+  .stage.run { color: var(--accent); font-weight: 600; }
+  .stage .ms { color: var(--muted); font-weight: 400; font-size: .85em; }
+  .finding { display: grid; grid-template-columns: 180px 1fr; gap: 14px; }
+  @media (max-width: 560px) { .finding { grid-template-columns: 1fr; } }
+  .finding img { width: 100%; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; }
+  .finding h3 { margin: 0 0 4px; font-size: 1rem; }
+  .meta { font-size: .85rem; color: var(--muted); }
+  .pill { display: inline-block; font-size: .8rem; padding: 2px 8px; border-radius: 99px; margin-right: 4px; }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .quote { font-style: italic; color: var(--muted); }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; }
+  .explain { white-space: pre-wrap; }
+  .trace { font-size: .8rem; color: var(--muted); }
+  .err { color: var(--bad); }
+  a { color: var(--accent); }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center;
+    justify-content: center; padding: 16px; z-index: 10; }
+  .lightbox img { max-width: 100%; max-height: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Walkthrough</h1>
+  <p class="tag">Landlords have lawyers. Tenants have a phone.</p>
+
+  <!-- Screen 1: record / upload -->
+  <section id="s-record">
+    <div class="card">
+      <p class="prompt">Start by saying who lives here and how many apartments are in your building, then show us the problems.</p>
+      <video id="preview" playsinline muted class="hidden"></video>
+      <video id="playback" playsinline controls class="hidden"></video>
+      <div class="row" style="margin-top:12px">
+        <button id="b-camera" class="primary">Open camera</button>
+        <button id="b-rec" class="primary hidden">Record</button>
+        <button id="b-stop" class="hidden"><span class="rec-dot"></span>Stop</button>
+        <label class="btn">Upload video<input id="f-upload" type="file" accept="video/*" hidden></label>
+      </div>
+      <p id="rec-status" class="meta"></p>
+      <details style="margin-top:8px">
+        <summary>Type the intro instead (optional)</summary>
+        <input id="intro" type="text" placeholder="e.g. My son is 6. There are 20 apartments in my building." style="margin-top:8px">
+      </details>
+      <div class="row" style="margin-top:14px">
+        <button id="b-analyze" class="primary" disabled>Analyze</button>
+      </div>
+    </div>
+    <p class="meta">Checks 6 common conditions, not all housing law. Not legal advice. Nothing is filed automatically.</p>
+  </section>
+
+  <!-- Screen 2: analyzing -->
+  <section id="s-analyzing" class="hidden">
+    <h2>Analyzing your video</h2>
+    <div class="card" id="stages"></div>
+    <p id="an-error" class="err"></p>
+    <button id="b-restart-err" class="hidden">Start over</button>
+  </section>
+
+  <!-- Screen 3: results -->
+  <section id="s-results" class="hidden">
+    <h2>What we heard</h2>
+    <div class="card"><dl class="facts" id="facts"></dl></div>
+
+    <h2 id="h-findings">Problems that likely break NYC housing rules</h2>
+    <div id="findings"></div>
+
+    <h2 id="h-not">Not a violation, and why</h2>
+    <div id="not"></div>
+
+    <h2 id="h-refilm">Film again or confirm</h2>
+    <div id="refilm"></div>
+
+    <h2>Your rights, explained</h2>
+    <div class="card explain" id="rights" dir="auto"></div>
+
+    <h2>Complaint draft (English)</h2>
+    <div class="card">
+      <textarea id="complaint" class="complaint"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button id="b-copy" class="primary">Copy</button>
+        <button id="b-download">Download .txt</button>
+        <a class="btn" href="https://portal.311.nyc.gov/" target="_blank" rel="noopener">Review, then file through 311 ↗</a>
+      </div>
+      <p class="meta">Fill in your address, review every line, then file it yourself. Walkthrough never files for you.</p>
+    </div>
+
+    <details class="trace card"><summary>How this was decided (model trace)</summary><div id="trace"></div></details>
+    <button id="b-restart">Analyze another video</button>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const show = (id) => ["s-record", "s-analyzing", "s-results"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+
+const RULES = {
+  WINDOW_GUARD: "Window without a window guard", HEAT_DAY: "Not enough heat (daytime)",
+  HEAT_NIGHT: "Not enough heat (night)", SMOKE_CO: "Smoke / CO detector not seen",
+  LEAK: "Water leak or water damage", MOLD: "Mold condition", PEELING_PAINT: "Peeling paint",
+};
+const STAGES = {
+  ingest: "Extracting frames and audio", transcribe: "Hydrogen: transcribing what you said",
+  household: "Neon: understanding who lives here", frame_checks: "Decisions API: checking every frame",
+  thermostat: "Neon: reading the thermostat", context: "Local time and outdoor temperature",
+  rules: "Applying NYC rules", route: "Routing by confidence (Carbon re-checks unsure ones)",
+  classify: "Decisions API: category and likely severity", write: "Neon: writing your explanation and complaint",
+  verify: "Decisions API: checking every claim against the evidence",
+};
+
+let blob = null, blobName = null, stream = null, recorder = null;
+
+// ---------- Screen 1: record / upload
+$("b-camera").onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+  } catch (e) {
+    $("rec-status").textContent = "Camera unavailable (" + e.name + "). You can upload a video instead.";
+    return;
+  }
+  $("preview").srcObject = stream; $("preview").classList.remove("hidden"); $("preview").play();
+  $("playback").classList.add("hidden");
+  $("b-camera").classList.add("hidden"); $("b-rec").classList.remove("hidden");
+};
+
+$("b-rec").onclick = () => {
+  const types = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
+  const mimeType = types.find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+  recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+  const chunks = [];
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.onstop = () => {
+    const type = recorder.mimeType || "video/webm";
+    setClip(new Blob(chunks, { type }), type.includes("mp4") ? "recording.mp4" : "recording.webm");
+    stream.getTracks().forEach((t) => t.stop());
+    $("preview").classList.add("hidden");
+    $("b-stop").classList.add("hidden"); $("b-camera").classList.remove("hidden");
+    $("b-camera").textContent = "Record again";
+  };
+  recorder.start(1000);
+  $("b-rec").classList.add("hidden"); $("b-stop").classList.remove("hidden");
+  $("rec-status").textContent = "Recording… say who lives here first.";
+};
+$("b-stop").onclick = () => recorder && recorder.stop();
+
+$("f-upload").onchange = (e) => { const f = e.target.files[0]; if (f) setClip(f, f.name); };
+
+function setClip(b, name) {
+  blob = b; blobName = name;
+  $("playback").src = URL.createObjectURL(b); $("playback").classList.remove("hidden");
+  $("rec-status").textContent = `Ready: ${name} (${(b.size / 1e6).toFixed(1)} MB)`;
+  $("b-analyze").disabled = false;
+}
+
+$("b-analyze").onclick = async () => {
+  if (!blob) return;
+  const fd = new FormData();
+  fd.append("video", blob, blobName);
+  const intro = $("intro").value.trim();
+  if (intro) fd.append("intro", intro);
+  show("s-analyzing"); renderStages([], "upload"); $("an-error").textContent = "";
+  try {
+    const r = await fetch("/analyze", { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    const id = (await r.json()).job_id;
+    history.replaceState(null, "", `?job=${id}`);   // reload-safe
+    poll(id);
+  } catch (e) { fail(e.message); }
+};
+
+// ---------- Screen 2: analyzing
+function renderStages(trace, running) {
+  const lines = trace.map((t) => {
+    let label = STAGES[t.step] || t.step;
+    if (t.step === "frame_checks") label = `Decisions API: ${t.calls} frames × 18 checks`;
+    if (t.step === "route") label = t.calls ? `Carbon: re-checked ${t.calls} uncertain finding${t.calls > 1 ? "s" : ""}` : "Routing by confidence (no re-checks needed)";
+    if (t.step === "classify") label = `Decisions API: category + severity for ${t.calls} finding${t.calls === 1 ? "" : "s"}`;
+    if (t.step === "thermostat" && !t.calls) label = "No thermostat in view";
+    return `<div class="stage done">✓ ${esc(label)} <span class="ms">${(t.ms / 1000).toFixed(1)} s</span></div>`;
+  });
+  if (running) lines.push(`<div class="stage run">… ${esc(running === "upload" ? "Uploading video" : STAGES[running] || running)}</div>`);
+  $("stages").innerHTML = lines.join("");
+}
+
+async function poll(id) {
+  try {
+    const j = await (await fetch(`/analyze/${id}`)).json();
+    renderStages(j.trace || [], j.status === "queued" ? "upload" : j.running);
+    if (j.status === "done") return renderResults(j.report);
+    if (j.status === "error") return fail(j.error);
+  } catch (e) { /* transient; keep polling */ }
+  setTimeout(() => poll(id), 700);
+}
+function fail(msg) { $("an-error").textContent = "Something went wrong: " + msg; $("b-restart-err").classList.remove("hidden"); }
+
+// ---------- Screen 3: results
+const fmtT = (f) => f.t_start === f.t_end ? `${f.t_start.toFixed(0)} s` : `${f.t_start.toFixed(0)}–${f.t_end.toFixed(0)} s`;
+
+function card(f, base, kind) {
+  const pills = [];
+  if (kind === "finding") {
+    pills.push(`<span class="pill bad">${esc(f.likely_severity || "violation")}</span>`);
+    if (f.category) pills.push(`<span class="pill warn">${esc(f.category)}</span>`);
+  } else if (kind === "not") pills.push(`<span class="pill ok">not a violation</span>`);
+  else pills.push(`<span class="pill warn">${f.rule === "SMOKE_CO" ? "please confirm" : "film again"}</span>`);
+  if (f.lead_concern) pills.push(`<span class="pill bad">possible lead-paint concern</span>`);
+  const reason = kind === "refilm" ? (f.refilm_reason || f.explanation) : f.explanation;
+  return `<div class="card finding">
+    <img src="${esc(base + f.evidence_frame)}" alt="Evidence frame at ${esc(fmtT(f))}" data-zoom>
+    <div>
+      <h3>${esc(RULES[f.rule] || f.rule)}</h3>
+      <div>${pills.join("")}</div>
+      <p style="margin:8px 0">${esc(reason)}</p>
+      ${f.tenant_quote ? `<p class="quote" dir="auto">“${esc(f.tenant_quote)}”</p>` : ""}
+      <div class="meta">Video ${esc(fmtT(f))} · confidence ${(f.confidence * 100).toFixed(0)}% · decided by ${esc(f.decided_by)}${f.escalated ? " (re-checked)" : ""}
+        ${f.source_url ? ` · <a href="${esc(f.source_url)}" target="_blank" rel="noopener">rule source</a>` : ""}</div>
+      ${kind === "refilm" ? `<button style="margin-top:8px" onclick="restart()">${f.rule === "SMOKE_CO" ? "Film the detector" : "Film this spot again"}</button>` : ""}
+    </div></div>`;
+}
+
+function section(listId, headId, items, base, kind, emptyMsg) {
+  $(headId).classList.toggle("hidden", !items.length && !emptyMsg);
+  $(listId).innerHTML = items.length ? items.map((f) => card(f, base, kind)).join("")
+    : (emptyMsg ? `<div class="card meta">${esc(emptyMsg)}</div>` : "");
+}
+
+function renderResults(r) {
+  const h = r.household || {}, c = r.context || {}, base = r.frame_base || "";
+  const kids = (h.children_ages || []).length ? h.children_ages.join(", ") : (h.child_10_or_younger ? "a child 10 or younger" : "none mentioned");
+  const facts = [
+    ["Children (ages)", kids], ["Building", h.building_3plus_units ? "3 or more apartments" : "fewer than 3 apartments"],
+    ["Borough", h.borough || "not said"], ["Language", h.language || "?"],
+    ["Problems you mentioned", (h.stated_problems || []).join("; ") || "none"],
+    ["Time / outdoors", `${c.local_time || "?"} · ${c.outdoor_f != null ? Math.round(c.outdoor_f) + "°F" : "unknown"}`],
+  ];
+  if (r.thermostat) facts.push(["Thermostat", r.thermostat.indoor_f != null ? `${r.thermostat.indoor_f}°F` : "not legible"]);
+  $("facts").innerHTML = facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd dir="auto">${esc(v)}</dd>`).join("")
+    + (h.needs_confirmation ? `<dt></dt><dd><span class="pill warn">please confirm these facts. We weren't sure</span></dd>` : "")
+    + (h.child_quote ? `<dt>You said</dt><dd class="quote" dir="auto">“${esc(h.child_quote)}”</dd>` : "");
+
+  section("findings", "h-findings", r.findings || [], base, "finding", "No violations found in this video.");
+  section("not", "h-not", r.not_violations || [], base, "not");
+  section("refilm", "h-refilm", r.refilm || [], base, "refilm");
+  $("rights").textContent = r.rights_explanation || "";
+  $("complaint").value = r.complaint_draft_en || "";
+  const removed = (r.claims || []).filter((x) => !x.kept).length;
+  $("trace").innerHTML = (r.trace || []).map((t) =>
+      `<div>${esc(t.step)} · ${esc(t.model || "-")} · ${t.calls} call${t.calls === 1 ? "" : "s"} · ${t.ms} ms</div>`).join("")
+    + `<div>Frames usable: ${r.frames_usable}/${r.frames_total} · claims removed by verification: ${removed}</div>`;
+  show("s-results");
+}
+
+$("b-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("complaint").value); }
+  catch { $("complaint").select(); document.execCommand("copy"); }
+  $("b-copy").textContent = "Copied ✓"; setTimeout(() => ($("b-copy").textContent = "Copy"), 1500);
+};
+$("b-download").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([$("complaint").value], { type: "text/plain" }));
+  a.download = "walkthrough-complaint.txt"; a.click();
+};
+
+function restart() {
+  blob = null; $("b-analyze").disabled = true; $("rec-status").textContent = "";
+  $("playback").classList.add("hidden"); $("f-upload").value = ""; show("s-record"); window.scrollTo(0, 0);
+  history.replaceState(null, "", location.pathname);
+}
+$("b-restart").onclick = restart; $("b-restart-err").onclick = restart;
+
+const jobParam = new URLSearchParams(location.search).get("job");
+if (jobParam) { show("s-analyzing"); renderStages([], "upload"); poll(jobParam); }
+
+document.addEventListener("click", (e) => {
+  if (e.target.matches("[data-zoom]")) {
+    const lb = document.createElement("div"); lb.className = "lightbox";
+    lb.innerHTML = `<img src="${esc(e.target.src)}" alt="">`; lb.onclick = () => lb.remove();
+    document.body.appendChild(lb);
+  }
+});
+</script>
+</body>
+</html>

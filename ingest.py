@@ -23,7 +23,10 @@ def probe(video_path: Path) -> dict:
                 "-of", "json", str(video_path)]).stdout
     info = json.loads(out)
     streams = [s.get("codec_type") for s in info.get("streams", [])]
-    duration = float(info.get("format", {}).get("duration") or 0.0)
+    try:  # browser MediaRecorder webm often reports duration "N/A"
+        duration = float(info.get("format", {}).get("duration"))
+    except (TypeError, ValueError):
+        duration = 0.0
     return {"duration": duration, "has_audio": "audio" in streams}
 
 
@@ -61,4 +64,5 @@ def ingest(video_path: str | Path, work_dir: str | Path | None = None) -> dict:
         _run(["ffmpeg", "-y", "-v", "error", "-i", str(video_path), "-vn",
               "-ac", "1", "-ar", "16000", "-b:a", "64k", str(audio_path)])
 
-    return {"work_dir": work, "duration": meta["duration"], "frames": frames, "audio_path": audio_path}
+    duration = meta["duration"] or len(frames) / config.FPS
+    return {"work_dir": work, "duration": duration, "frames": frames, "audio_path": audio_path}
