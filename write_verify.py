@@ -77,7 +77,9 @@ def write(routed: dict, household: dict | None, context: dict) -> dict:
         PROMPT.format(lang=lang, lang_name=LANG_NAMES.get(lang, lang),
                       data=json.dumps(data, ensure_ascii=False, indent=1)),
         types.GenerateContentConfig(response_mime_type="application/json", response_schema=Writing),
-        step="write",
+        step="write", purpose=f"write the rights explanation ({LANG_NAMES.get(lang, lang)}) and complaint claims",
+        key=lambda r: (lambda d: f"{len(d.get('claims', []))} claims, explanation "
+                                 f"{len(d.get('rights_explanation', ''))} chars")(models.parse_json(r)),
     )
     return models.parse_json(resp)
 
@@ -112,7 +114,10 @@ def verify(claims: list[dict], findings: list[dict], context: dict, transcript: 
         answers = models.decide(
             [{"type": "text", "text": text},
              models.media_block(work_dir / f["evidence_frame"], resolution=config.FRAME_RESOLUTION)],
-            questions, step="verify")
+            questions, step="verify",
+            purpose=f"check {len(group)} complaint claim(s) about {RULE_LABELS[f['rule']]} against the evidence",
+            key=lambda a: (f"{sum(x.noul >= config.VERIFY_MIN_P for x in a.values())}/{len(a)} supported "
+                           f"(min P={min(x.noul for x in a.values()):.2f})"))
         for i, c in enumerate(group):
             p = round(answers[f"c{i}"].noul, 3)
             results.append({**c, "p_supported": p, "kept": p >= config.VERIFY_MIN_P})

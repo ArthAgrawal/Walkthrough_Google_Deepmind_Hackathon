@@ -6,7 +6,7 @@ time range. `is_violation` is True / False (with the reason in `explanation`) / 
 decide: e.g. illegible thermostat; step 9 routes these to "film this spot again").
 Category, likely severity and routing are filled in later (steps 8-9).
 
-household=None means "video-only" mode (spoken facts removed, the Section 10 baseline): rules that
+household=None (or household["unknown"], e.g. no audio) means "video-only" mode (spoken facts removed, the Section 10 baseline): rules that
 depend on who lives there assume the condition counts, because the video alone can't rule it out.
 """
 from __future__ import annotations
@@ -51,6 +51,11 @@ FRAME_SCORES: dict[str, Callable[[dict], float]] = {
 
 
 # ---------------------------------------------------------------- helpers
+
+def _known(household: dict | None) -> bool:
+    """False in video-only mode (None) or when nothing was said (household["unknown"])."""
+    return household is not None and not household.get("unknown")
+
 
 def merge_segments(frame_checks: list[dict], score_fn: Callable[[dict], float]) -> list[dict]:
     """Group usable frames with score >= CONF_LOW into time segments (gap <= MERGE_GAP_S).
@@ -99,7 +104,7 @@ def window_guard(frame_checks, household, transcript) -> list[dict]:
     """WINDOW_GUARD: window with no guard; violation only if child <=10 AND building has 3+ units."""
     out = []
     for seg in merge_segments(frame_checks, FRAME_SCORES["WINDOW_GUARD"]):
-        if household is None:
+        if not _known(household):
             v, why, q = True, "Window visible with no guard. Household facts unknown (video only).", None
         else:
             child, big = household["child_10_or_younger"], household["building_3plus_units"]
@@ -126,12 +131,12 @@ def simple_condition(rule: str, frame_checks, household, transcript) -> list[dic
             why = "Water stain or active leak visible."
         elif rule == "MOLD":
             why = "Dark growth observed on a surface (condition observed; no health claim)."
-            if household is not None and not household["building_3plus_units"]:
+            if _known(household) and not household["building_3plus_units"]:
                 v = False
                 why += " The building has fewer than 3 apartments, so Local Law 55 mold rules do not apply."
         else:
             why = "Peeling paint visible."
-            if household is not None and household["child_under_6"]:
+            if _known(household) and household["child_under_6"]:
                 why += " A child under 6 lives here: possible lead-paint concern."
                 extra["lead_concern"] = True
         q = nearby_quote(transcript, seg["t_start"], seg["t_end"])

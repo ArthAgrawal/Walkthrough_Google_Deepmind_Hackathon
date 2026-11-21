@@ -56,7 +56,10 @@ def extract(transcript_text: str, language: str = "en") -> dict:
     resp = models.neon(
         PROMPT.format(language=language, transcript=transcript_text or "(no speech)"),
         types.GenerateContentConfig(response_mime_type="application/json", response_schema=HouseholdFacts),
-        step="household",
+        step="household", purpose="extract household facts from what the tenant said",
+        key=lambda r: (lambda d: f"children={d['children_ages']}, child≤10={d['child_10_or_younger']}, "
+                                 f"under6={d['child_under_6']}, 3+units={d['building_3plus_units']}, "
+                                 f"confirm={d['needs_confirmation']}")(models.parse_json(r)),
     )
     facts = models.parse_json(resp)
     # Enforce consistency in code rather than trusting the model.
@@ -67,3 +70,14 @@ def extract(transcript_text: str, language: str = "en") -> dict:
     if facts["child_under_6"]:
         facts["child_10_or_younger"] = True
     return facts
+
+
+def unknown_facts(reason: str, language: str = "en") -> dict:
+    """HouseholdFacts when nothing was said (e.g. no audio track): all unknown, must be confirmed.
+
+    rules.py treats `unknown: True` like video-only mode (conditions count; video can't rule them out).
+    """
+    return {"language": language, "child_10_or_younger": None, "child_under_6": None, "children_ages": [],
+            "building_3plus_units": None, "borough": None, "stated_problems": [],
+            "needs_confirmation": True, "child_quote": None, "units_quote": None,
+            "unknown": True, "unknown_reason": reason}

@@ -6,8 +6,10 @@ import time
 from pathlib import Path
 from typing import Callable
 
+import call_log
 import classify_route
 import config
+import models
 import context as context_mod
 import frame_checks as frame_checks_mod
 import household as household_mod
@@ -60,13 +62,20 @@ def run_steps_1_7(video_path: str | Path, intro_override: str | None = None, vid
     work = ing["work_dir"]
 
     transcript, household = None, None
+    no_audio = ing["audio_path"] is None
     if not video_only:
-        if ing["audio_path"]:
+        if not no_audio:
             transcript = tr.run("transcribe", config.HYDROGEN, 1, transcribe_mod.transcribe, ing["audio_path"])
         else:
-            transcript = transcribe_mod.transcribe(None)
-        text = intro_override if intro_override is not None else transcribe_mod.format_for_prompt(transcript)
-        household = tr.run("household", config.NEON, 1, household_mod.extract, text, transcript["language"])
+            transcript = transcribe_mod.transcribe(None)      # no audio track: empty transcript, no call
+        if intro_override is not None:
+            household = tr.run("household", config.NEON, 1, household_mod.extract, intro_override,
+                               transcript["language"])
+        elif no_audio:
+            household = household_mod.unknown_facts("no audio track")
+        else:
+            household = tr.run("household", config.NEON, 1, household_mod.extract,
+                               transcribe_mod.format_for_prompt(transcript), transcript["language"])
 
     checks = tr.run("frame_checks", config.DECISION, len(ing["frames"]),
                     frame_checks_mod.check_frames, ing["frames"], work)
@@ -77,7 +86,7 @@ def run_steps_1_7(video_path: str | Path, intro_override: str | None = None, vid
 
     report = {
         "video": str(Path(video_path)), "work_dir": str(work), "duration": ing["duration"],
-        "video_only": video_only, "transcript": transcript, "household": household, "context": ctx,
+        "video_only": video_only, "no_audio": no_audio, "transcript": transcript, "household": household, "context": ctx,
         "thermostat": thermo, "frame_checks": checks, "candidates": candidates, "trace": tr.entries,
     }
     (Path(work) / ("steps_1_7_video_only.json" if video_only else "steps_1_7.json")).write_text(
@@ -89,7 +98,21 @@ def run(video_path: str | Path, intro_override: str | None = None, video_only: b
         local_time: str | None = None, outdoor_f: float | None = None,
         on_event: Callable[[list[dict], str | None], None] | None = None,
         work_dir: str | Path | None = None) -> dict:
-    """Run steps 1-11 and return the Report (Section 7), also saved as report.json in the work dir."""
+    """Run steps 1-11 and return the Report (Section 7), also saved as report.json in the work dir.
+
+    Every model call is collected into the per-job log (model_log.json + report["model_log"]).
+    """
+    with models.collect_calls() as calls:
+        report = _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event, work_dir)
+    work = Path(report["work_dir"])
+    report["model_log"] = call_log.build(calls, work, "model_log_video_only.json" if video_only else "model_log.json")
+    (work / ("report_video_only.json" if video_only else "report.json")).write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return report
+
+
+def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event, work_dir) -> dict:
+    """Steps 1-11 body for run()."""
     tr = Trace(on_event)
     r = run_steps_1_7(video_path, intro_override, video_only, local_time, outdoor_f, tr, work_dir)
     work = Path(r["work_dir"])
@@ -112,9 +135,7 @@ def run(video_path: str | Path, intro_override: str | None = None, video_only: b
         "rights_explanation": writing.get("rights_explanation", ""), "complaint_draft_en": complaint,
         "claims": verified, "transcript": r["transcript"], "trace": tr.entries,
         "caseworker_job_id": None, "work_dir": r["work_dir"], "duration": r["duration"],
-        "video_only": video_only, "frames_total": len(r["frame_checks"]),
+        "video_only": video_only, "no_audio": r["no_audio"], "frames_total": len(r["frame_checks"]),
         "frames_usable": sum(f["usable"] for f in r["frame_checks"]),
     }
-    (work / ("report_video_only.json" if video_only else "report.json")).write_text(
-        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return report

@@ -41,7 +41,9 @@ def read_thermostat(frame_checks: list[dict], work_dir: Path) -> dict | None:
     resp = models.neon(
         [img, PROMPT],
         types.GenerateContentConfig(response_mime_type="application/json", response_schema=ThermostatReading),
-        step="thermostat",
+        step="thermostat", purpose=f"read the thermostat on the frame at {best['t']:.0f} s",
+        key=lambda resp: (lambda d: f"reads {d.get('current_temp')}°{d.get('unit')}"
+                                    f"{'' if d.get('legible') else ' (not legible)'}")(models.parse_json(resp)),
     )
     r = models.parse_json(resp)
     temp, unit = r.get("current_temp"), r.get("unit")

@@ -31,7 +31,7 @@ JOBS: dict[str, dict] = {}
 _run_lock = threading.Lock()
 
 
-def _run_job(job_id: str, video: Path, intro: str | None) -> None:
+def _run_job(job_id: str, video: Path, intro: str | None, video_only: bool) -> None:
     """Background thread: run the pipeline, streaming trace progress into JOBS[job_id]."""
     job = JOBS[job_id]
 
@@ -42,7 +42,7 @@ def _run_job(job_id: str, video: Path, intro: str | None) -> None:
     with _run_lock:
         job["status"] = "running"
         try:
-            report = pipeline.run(video, intro_override=intro, on_event=on_event,
+            report = pipeline.run(video, intro_override=intro, video_only=video_only, on_event=on_event,
                                   work_dir=config.WORK_DIR / job_id)
             report["frame_base"] = f"/work/{job_id}/"
             report.pop("work_dir", None)
@@ -53,8 +53,9 @@ def _run_job(job_id: str, video: Path, intro: str | None) -> None:
 
 
 @app.post("/analyze")
-async def analyze(video: UploadFile = File(...), intro: str | None = Form(None)) -> dict:
-    """Accept a video (+ optional typed intro that overrides the spoken one); start analysis."""
+async def analyze(video: UploadFile = File(...), intro: str | None = Form(None),
+                  video_only: bool = Form(False)) -> dict:
+    """Accept a video (+ optional typed intro, or video_only=true to ignore audio); start analysis."""
     suffix = Path(video.filename or "clip.webm").suffix.lower() or ".webm"
     if suffix not in ALLOWED:
         raise HTTPException(400, f"Unsupported file type {suffix}; use webm/mp4/mov.")
@@ -62,7 +63,7 @@ async def analyze(video: UploadFile = File(...), intro: str | None = Form(None))
     path = UPLOAD_DIR / f"{job_id}{suffix}"
     path.write_bytes(await video.read())
     JOBS[job_id] = {"status": "queued", "trace": [], "running": None, "report": None, "error": None}
-    threading.Thread(target=_run_job, args=(job_id, path, (intro or "").strip() or None), daemon=True).start()
+    threading.Thread(target=_run_job, args=(job_id, path, None if video_only else ((intro or "").strip() or None), video_only), daemon=True).start()
     return {"job_id": job_id}
 
 

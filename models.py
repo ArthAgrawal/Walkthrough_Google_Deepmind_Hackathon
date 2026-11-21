@@ -19,11 +19,13 @@ and google-genai 3.6.1 source):
 from __future__ import annotations
 
 import base64
+import contextvars
 import json
 import logging
 import os
 import threading
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -96,11 +98,39 @@ def _sanitize(obj: Any) -> Any:
 
 
 def _write_log(record: dict) -> None:
-    """Append one JSON record to the model-call log file (thread-safe)."""
+    """Append one JSON record to the global log file, and to the active per-job collector (thread-safe)."""
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
-    line = json.dumps(_sanitize(record), ensure_ascii=False, default=str)
-    with _log_lock, config.MODEL_LOG.open("a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    clean = json.loads(json.dumps(_sanitize(record), ensure_ascii=False, default=str))
+    with _log_lock:
+        with config.MODEL_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(clean, ensure_ascii=False) + "\n")
+        calls = _collector.get()
+        if calls is not None:
+            calls.append(clean)
+
+
+# Per-job call collection. Set by collect_calls(); worker threads must run inside a copy of the
+# submitting thread's context (contextvars.copy_context()) so their calls land in the same list.
+_collector: contextvars.ContextVar[list | None] = contextvars.ContextVar("model_calls", default=None)
+
+
+@contextmanager
+def collect_calls():
+    """Context manager yielding a list that receives every model-call record made inside it."""
+    calls: list[dict] = []
+    token = _collector.set(calls)
+    try:
+        yield calls
+    finally:
+        _collector.reset(token)
+
+
+def _key_output(key: Callable[[Any], str] | None, result: Any, default: Callable[[Any], str]) -> str:
+    """Compute a one-line 'key output' for the call log; never raises."""
+    try:
+        return (key or default)(result)
+    except Exception as exc:
+        return f"(summary unavailable: {type(exc).__name__})"
 
 
 # ---------------------------------------------------------------- retry
@@ -176,47 +206,50 @@ def _with_thinking(config_: types.GenerateContentConfig | dict | None, thinking:
 
 def generate(model: str, contents: Any, config_: types.GenerateContentConfig | dict | None = None,
              step: str = "", thinking: str | None = config.THINKING_DEFAULT,
-             timeout_s: float | None = config.CALL_TIMEOUT_S) -> types.GenerateContentResponse:
+             timeout_s: float | None = config.CALL_TIMEOUT_S, purpose: str = "",
+             key: Callable[[Any], str] | None = None) -> types.GenerateContentResponse:
     """Call a text/multimodal Gemini model (HYDROGEN/NEON/CARBON) with retry + logging.
 
     `thinking` sets ThinkingConfig.thinking_level (MINIMAL/LOW/MEDIUM/HIGH/XHIGH); defaults to
     config.THINKING_DEFAULT. Pass thinking=None to use the model's own default.
     A thinking_config already inside `config_` wins over `thinking`.
     `timeout_s` bounds one request; timeouts raise without retry.
+    `purpose` (plain words) and `key(response) -> str` (key output) feed the per-job call log.
     """
     client = get_client()
     config_ = _with_thinking(config_, thinking, timeout_s)
     record = {"ts": datetime.now(timezone.utc).isoformat(), "kind": "generate", "step": step,
-              "model": model, "prompt": contents, "config": config_}
+              "model": model, "purpose": purpose, "prompt": contents, "config": config_}
     resp = _call_with_retry(
         lambda: client.models.generate_content(model=model, contents=contents, config=config_), record)
     try:
         text = resp.text
     except Exception:
         text = None
-    record.update(output=text, usage=getattr(resp, "usage_metadata", None))
+    record.update(output=text, usage=getattr(resp, "usage_metadata", None),
+                  key_output=_key_output(key, resp, lambda r: (text or "").strip().replace("\n", " ")[:120]))
     _write_log(record)
     log.info("%s [%s] %d ms", model, step or "-", record["ms"])
     return resp
 
 
 def hydrogen(contents: Any, config_=None, step: str = "",
-             thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
-    """Fast model: transcription, quick scans."""
-    return generate(config.HYDROGEN, contents, config_, step, thinking)
+             thinking: str | None = config.THINKING_DEFAULT, **kw) -> types.GenerateContentResponse:
+    """Fast model: transcription, quick scans. Extra kwargs (purpose, key, timeout_s) go to generate()."""
+    return generate(config.HYDROGEN, contents, config_, step, thinking, **kw)
 
 
 def neon(contents: Any, config_=None, step: str = "",
-         thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
+         thinking: str | None = config.THINKING_DEFAULT, **kw) -> types.GenerateContentResponse:
     """Understanding + writing model: household facts, thermostat reading, complaint text."""
-    return generate(config.NEON, contents, config_, step, thinking)
+    return generate(config.NEON, contents, config_, step, thinking, **kw)
 
 
 def carbon(contents: Any, config_=None, step: str = "",
            thinking: str | None = config.THINKING_CARBON,
-           timeout_s: float | None = config.CARBON_TIMEOUT_S) -> types.GenerateContentResponse:
+           timeout_s: float | None = config.CARBON_TIMEOUT_S, **kw) -> types.GenerateContentResponse:
     """Hard-cases model: re-checks uncertain findings (higher thinking, bounded by a timeout)."""
-    return generate(config.CARBON, contents, config_, step, thinking, timeout_s)
+    return generate(config.CARBON, contents, config_, step, thinking, timeout_s, **kw)
 
 
 def parse_json(resp: types.GenerateContentResponse) -> Any:
@@ -232,15 +265,31 @@ def parse_json(resp: types.GenerateContentResponse) -> Any:
 
 # ---------------------------------------------------------------- Decisions API
 
-def decide(input_: str | dict | list, questions: dict, step: str = "") -> dict[str, Any]:
+def _default_decide_key(answers: dict) -> str:
+    """Default key output: the strongest answers, e.g. 'is_x=0.97, dept=billing (0.88)'."""
+    items = []
+    for k, a in answers.items():
+        if a.type == "noul":
+            items.append((a.noul, f"P({k})={a.noul:.2f}"))
+        elif a.type == "choice":
+            items.append((a.confidence, f"{k}={a.choice} ({a.confidence:.2f})"))
+        elif a.type == "score":
+            items.append((a.confidence, f"{k}={a.score:.2f}"))
+    return ", ".join(s for _, s in sorted(items, reverse=True)[:4])
+
+
+def decide(input_: str | dict | list, questions: dict, step: str = "", purpose: str = "",
+           key: Callable[[dict], str] | None = None) -> dict[str, Any]:
     """Ask all `questions` against one shared `input_` in ONE Decisions API call.
 
     Returns {question_id: answer} where each answer is the SDK pydantic object
     (NoulAnswer / ChoiceAnswer / ScoreAnswer). Raises if the response was content-blocked.
+    `purpose` and `key(answers) -> str` feed the per-job call log.
     """
     client = get_client()
     record = {"ts": datetime.now(timezone.utc).isoformat(), "kind": "decide", "step": step,
-              "model": config.DECISION, "prompt": input_, "config": {"questions": questions}}
+              "model": config.DECISION, "purpose": purpose, "questions": len(questions),
+              "prompt": input_, "config": {"questions": questions}}
     resp = _call_with_retry(
         lambda: client.decisions.create(model=config.DECISION, input=input_, questions=questions), record)
     fb = getattr(resp, "prompt_feedback", None)
@@ -249,7 +298,8 @@ def decide(input_: str | dict | list, questions: dict, step: str = "") -> dict[s
         _write_log(record)
         raise RuntimeError(f"Decisions input blocked: {fb.block_reason} {fb.block_reason_message}")
     answers = resp.answers or {}
-    record.update(output={k: a for k, a in answers.items()}, usage=getattr(resp, "usage", None))
+    record.update(output={k: a for k, a in answers.items()}, usage=getattr(resp, "usage", None),
+                  key_output=_key_output(key, answers, _default_decide_key))
     _write_log(record)
     log.info("%s [%s] %d questions, %d ms", config.DECISION, step or "-", len(questions), record["ms"])
     return answers

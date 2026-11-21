@@ -38,7 +38,8 @@ def transcribe(audio_path: str | Path | None) -> dict:
     resp = models.hydrogen(
         [audio, PROMPT],
         types.GenerateContentConfig(response_mime_type="application/json", response_schema=Transcript),
-        step="transcribe",
+        step="transcribe", purpose="transcribe the audio in its original language",
+        key=lambda r: (lambda d: f"language={d['language']}, {len(d['segments'])} segments")(models.parse_json(r)),
     )
     data = models.parse_json(resp)
     data["text"] = " ".join(s["text"].strip() for s in data.get("segments", []))

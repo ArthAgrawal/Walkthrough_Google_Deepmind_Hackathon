@@ -69,8 +69,14 @@ def carbon_recheck(finding: dict, frame_checks: list[dict], transcript: dict | N
         label=RULE_LABELS[finding["rule"]], t0=finding["t_start"], t1=finding["t_end"],
         conf=finding["confidence"], explanation=finding["explanation"],
         narration=transcribe.format_for_prompt(transcript or {}) or "(none)"))
-    resp = models.carbon(parts, types.GenerateContentConfig(
-        response_mime_type="application/json", response_schema=CarbonVerdict), step="carbon_recheck")
+    outcome = {"present": "kept", "absent": "dropped", "unsure": "film again"}
+    resp = models.carbon(
+        parts, types.GenerateContentConfig(response_mime_type="application/json", response_schema=CarbonVerdict),
+        step="carbon_recheck",
+        purpose=f"re-checked uncertain {RULE_LABELS[finding['rule']]} finding "
+                f"(confidence {finding['confidence']:.2f}, {len(frames)} frames)",
+        key=lambda r: (lambda d: f"{d['verdict']} → {outcome[d['verdict']]}: {d['reason']}")(models.parse_json(r)),
+    )
     return models.parse_json(resp)
 
 
@@ -123,7 +129,7 @@ def route(candidates: list[dict], frame_checks: list[dict], transcript: dict | N
 
 def _household_text(household: dict | None) -> str:
     """One-line summary of household facts for Decisions context."""
-    if household is None:
+    if household is None or household.get("unknown"):
         return "Household facts: unknown."
     ages = household.get("children_ages") or []
     kids = f"children aged {ages}" if ages else ("a child 10 or younger" if household["child_10_or_younger"] else "no children")
@@ -146,7 +152,10 @@ def classify(finding: dict, household: dict | None, work_dir: Path) -> dict:
                          "instructions": "How severe is this condition for the people living here?",
                          "criteria": config.SEVERITY_LEVELS},
         },
-        step="classify",
+        step="classify", purpose=f"HPD category + likely severity for {RULE_LABELS[finding['rule']]}",
+        key=lambda a: (f"category={a['category'].choice} ({a['category'].confidence:.2f}), "
+                       f"severity={config.SEVERITY_NAMES[int(max(a['severity'].probabilities, key=a['severity'].probabilities.get))]} "
+                       f"(score {a['severity'].score:.2f})"),
     )
     cat, sev = answers["category"], answers["severity"]
     level = int(max(sev.probabilities, key=sev.probabilities.get))

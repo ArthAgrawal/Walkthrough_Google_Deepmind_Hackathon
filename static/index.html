@@ -56,7 +56,15 @@
   .facts dt { color: var(--muted); }
   .facts dd { margin: 0; }
   .explain { white-space: pre-wrap; }
-  .trace { font-size: .8rem; color: var(--muted); }
+  .trace { font-size: .8rem; color: var(--muted); margin-top: 28px; }
+  .log-summary { color: var(--ink); font-weight: 600; margin: 10px 0; }
+  .call { padding: 6px 0; border-top: 1px solid var(--line); }
+  .call .what { color: var(--ink); }
+  .call .out { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+  .call.fail .what { color: var(--bad); }
+  .check { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; cursor: pointer; }
+  .banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px;
+    font-weight: 600; margin-top: 16px; }
   .err { color: var(--bad); }
   a { color: var(--accent); }
   .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center;
@@ -82,6 +90,7 @@
         <label class="btn">Upload video<input id="f-upload" type="file" accept="video/*" hidden></label>
       </div>
       <p id="rec-status" class="meta"></p>
+      <label class="check"><input id="video-only" type="checkbox"> Ignore audio (video-only)</label>
       <details style="margin-top:8px">
         <summary>Type the intro instead (optional)</summary>
         <input id="intro" type="text" placeholder="e.g. My son is 6. There are 20 apartments in my building." style="margin-top:8px">
@@ -103,6 +112,7 @@
 
   <!-- Screen 3: results -->
   <section id="s-results" class="hidden">
+    <div id="banner" class="banner hidden"></div>
     <h2>What we heard</h2>
     <div class="card"><dl class="facts" id="facts"></dl></div>
 
@@ -129,7 +139,13 @@
       <p class="meta">Fill in your address, review every line, then file it yourself. Walkthrough never files for you.</p>
     </div>
 
-    <details class="trace card"><summary>How this was decided (model trace)</summary><div id="trace"></div></details>
+    <details class="trace card" id="howmade">
+      <summary>How this report was made</summary>
+      <p id="log-summary" class="log-summary"></p>
+      <div id="log-calls"></div>
+      <p id="log-extra"></p>
+      <a id="b-log" class="btn" download>Download log</a>
+    </details>
     <button id="b-restart">Analyze another video</button>
   </section>
 </main>
@@ -202,7 +218,8 @@ $("b-analyze").onclick = async () => {
   const fd = new FormData();
   fd.append("video", blob, blobName);
   const intro = $("intro").value.trim();
-  if (intro) fd.append("intro", intro);
+  if ($("video-only").checked) fd.append("video_only", "true");
+  else if (intro) fd.append("intro", intro);
   show("s-analyzing"); renderStages([], "upload"); $("an-error").textContent = "";
   try {
     const r = await fetch("/analyze", { method: "POST", body: fd });
@@ -271,9 +288,15 @@ function section(listId, headId, items, base, kind, emptyMsg) {
 
 function renderResults(r) {
   const h = r.household || {}, c = r.context || {}, base = r.frame_base || "";
-  const kids = (h.children_ages || []).length ? h.children_ages.join(", ") : (h.child_10_or_younger ? "a child 10 or younger" : "none mentioned");
+  const unknownFacts = !r.household || h.unknown;
+  const banner = r.video_only ? "Video-only mode: spoken facts ignored"
+    : (r.no_audio ? "This video has no audio track: we couldn't hear who lives here. Please confirm the facts below." : "");
+  $("banner").textContent = banner; $("banner").classList.toggle("hidden", !banner);
+  const kids = unknownFacts ? "unknown" : (h.children_ages || []).length ? h.children_ages.join(", ")
+    : (h.child_10_or_younger ? "a child 10 or younger" : "none mentioned");
+  const building = unknownFacts ? "unknown" : (h.building_3plus_units ? "3 or more apartments" : "fewer than 3 apartments");
   const facts = [
-    ["Children (ages)", kids], ["Building", h.building_3plus_units ? "3 or more apartments" : "fewer than 3 apartments"],
+    ["Children (ages)", kids], ["Building", building],
     ["Borough", h.borough || "not said"], ["Language", h.language || "?"],
     ["Problems you mentioned", (h.stated_problems || []).join("; ") || "none"],
     ["Time / outdoors", `${c.local_time || "?"} · ${c.outdoor_f != null ? Math.round(c.outdoor_f) + "°F" : "unknown"}`],
@@ -288,11 +311,31 @@ function renderResults(r) {
   section("refilm", "h-refilm", r.refilm || [], base, "refilm");
   $("rights").textContent = r.rights_explanation || "";
   $("complaint").value = r.complaint_draft_en || "";
-  const removed = (r.claims || []).filter((x) => !x.kept).length;
-  $("trace").innerHTML = (r.trace || []).map((t) =>
-      `<div>${esc(t.step)} · ${esc(t.model || "-")} · ${t.calls} call${t.calls === 1 ? "" : "s"} · ${t.ms} ms</div>`).join("")
-    + `<div>Frames usable: ${r.frames_usable}/${r.frames_total} · claims removed by verification: ${removed}</div>`;
+  renderLog(r);
   show("s-results");
+}
+
+let modelSummary = "";
+function renderLog(r) {
+  const log = r.model_log || { calls: [], summary: "" };
+  modelSummary = log.summary || "";
+  $("log-summary").textContent = modelSummary;
+  const t0 = log.calls.length ? Date.parse(log.calls[0].ts) : 0;
+  $("log-calls").innerHTML = log.calls.map((x) => {
+    const clock = new Date(x.ts).toLocaleTimeString([], { hour12: false });
+    const rel = ((Date.parse(x.ts) - t0) / 1000).toFixed(1);
+    const q = x.questions ? ` · ${x.questions} question${x.questions === 1 ? "" : "s"}` : "";
+    const retry = x.attempts > 1 ? ` · ${x.attempts} attempts` : "";
+    return `<div class="call${x.ok === false ? " fail" : ""}">
+      <div class="what"><b>${esc(x.model)}</b> · ${esc(x.purpose || x.step)}</div>
+      <div>${esc(clock)} (+${rel} s) · step ${esc(x.step)}${q} · ${x.ms} ms${retry}</div>
+      <div class="out">→ ${esc(x.ok === false ? "FAILED: " + (x.error || "") : x.key_output || "")}</div></div>`;
+  }).join("");
+  const removed = (r.claims || []).filter((x) => !x.kept).length;
+  $("log-extra").textContent = `Frames usable: ${r.frames_usable}/${r.frames_total} · claims removed by verification: ${removed}`;
+  $("b-log").href = (r.frame_base || "") + (log.file || "model_log.json");
+  $("b-log").setAttribute("download", "walkthrough-model-log.json");
+  if (location.hash === "#log") { $("howmade").open = true; $("howmade").scrollIntoView(); }
 }
 
 $("b-copy").onclick = async () => {
@@ -302,7 +345,8 @@ $("b-copy").onclick = async () => {
 };
 $("b-download").onclick = () => {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([$("complaint").value], { type: "text/plain" }));
+  const text = $("complaint").value + (modelSummary ? `\n\n---\nHow this report was made: ${modelSummary}\n` : "");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
   a.download = "walkthrough-complaint.txt"; a.click();
 };
 
