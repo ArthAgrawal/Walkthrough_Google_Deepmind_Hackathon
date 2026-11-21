@@ -144,16 +144,21 @@ Note: this eval was run before the app switched to the HPD order categories in `
 
 ![accuracy](eval/charts/category_accuracy.png) ![calibration](eval/charts/calibration.png)
 
-**Bucket regression test** (`scripts/check_buckets.py`, 4 real videos, all expectations met): "flush doesn't work" but the
-video shows it flushing → bucket 2 (Decisions API → Carbon: "water rushes into the toilet bowl and flushes normally");
-"no hot water" (not shown) → 1; toilet shown but never flushed → 1; water in a sink → not a leak; washer leaking → 1;
-jammed window → 1; loud/slow dishwasher → 2; stove burner → 4 ("please confirm").
+**Same video, different words** (real footage, `venue_01`: a 70 s walkthrough, 4 adults, no children). With the spoken
+facts, the 3 unguarded windows are correctly **not violations** (no child 10 or younger). With audio ignored
+(**Run again without audio**, same frames and same frame checks), the same windows become **1 violation + 2 "film
+again"**. The only thing that changed is what the tenant said.
 
-**On video:** `eval/eval_clips.py` (full pipeline vs video-only vs one-call Neon baseline, match = same rule within ±3 s)
-is ready but not yet run: we don't have a labelled clip set yet. What we have shown on real footage
-(`venue_01`, a 70 s walkthrough, 4 adults, no children): with the spoken facts, the 3 unguarded windows are
-correctly **not violations**; with audio ignored, the same frames give **1 violation + 2 "film again"**.
-Same video, different words, different answer.
+**Sanity check on 4 real videos, not an evaluation** (`scripts/check_buckets.py`). These are development videos; the
+expected buckets were written by the builder after watching them, so this is a regression test, not held-out accuracy.
+All expectations met: "flush doesn't work" but the video shows it flushing → bucket 2 (Decisions API → Carbon: "water
+rushes into the toilet bowl and flushes normally"); "no hot water" (not shown) → 1; toilet shown but never flushed → 1;
+water in a sink → not a leak; washer leaking → 1; jammed window → 1; loud/slow dishwasher → 2; stove burner → 4.
+
+**What we don't have yet: video accuracy numbers.** `eval/eval_clips.py` (full pipeline vs video-only vs a one-call Neon
+baseline; match = same rule within ±3 s) is built, but there is no labelled clip set: `eval/labels.csv` is empty, and
+the only videos we have were used during development. We report no video recall/precision rather than a number from
+labels written after seeing the system's output.
 
 **Failure log:** [`eval/FAILURES.md`](eval/FAILURES.md): Neon 13 s → 2.5 s (thinking LOW); Carbon re-check
 265 s → 17 s (MEDIUM, 3 frames, deadline), end-to-end ~5 min → 36 s; deadline errors no longer retried;
