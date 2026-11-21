@@ -149,7 +149,9 @@ facts, the 3 unguarded windows are correctly **not violations** (no child 10 or 
 (**Run again without audio**, same frames and same frame checks), the same windows become **1 violation + 2 "film
 again"**. The only thing that changed is what the tenant said.
 
-**Sanity check on 4 real videos, not an evaluation** (`scripts/check_buckets.py`). These are development videos; the
+**Sanity check on 4 real videos, not an evaluation** (`scripts/check_buckets.py`; the videos are in
+[`eval/videos/`](eval/videos/): `venue_01.mp4`, `flush_18s.mp4`, `hotwater_flush_37s.mp4`, `stoves_heater_49s.mp4`;
+run `python scripts/check_buckets.py eval/videos/*.mp4`). These are development videos; the
 expected buckets were written by the builder after watching them, so this is a regression test, not held-out accuracy.
 All expectations met: "flush doesn't work" but the video shows it flushing → bucket 2 (Decisions API → Carbon: "water
 rushes into the toilet bowl and flushes normally"); "no hot water" (not shown) → 1; toilet shown but never flushed → 1;

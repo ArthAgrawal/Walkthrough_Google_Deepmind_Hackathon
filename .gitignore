@@ -20,3 +20,7 @@ data/work/
 
 # Model-call logs (contain prompts/transcripts)
 logs/
+
+# Test videos used in scripts/check_buckets.py (shared with the owners' permission)
+!eval/videos/
+!eval/videos/*.mp4
