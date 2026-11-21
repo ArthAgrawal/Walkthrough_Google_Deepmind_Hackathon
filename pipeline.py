@@ -18,6 +18,7 @@ import reported
 import rules
 import thermostat as thermostat_mod
 import transcribe as transcribe_mod
+import verdict
 import write_verify
 
 
@@ -158,12 +159,17 @@ def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event
                             reported.check_reported, r["household"], r["frame_checks"], work)
     for key in ("findings", "not_violations", "refilm"):
         attach_evidence_frames(routed[key], r["frame_checks"])
+    sorted_ = tr.run("verdicts", config.DECISION,
+                     lambda x: int(bool(x["mentions"])) + sum(c["kind"] == "reported" for b in x["buckets"].values() for c in b),
+                     verdict.build, routed, reported_items, r["frame_checks"], r["transcript"], r["household"], work)
+    buckets = sorted_["buckets"]
 
     report = {
         "household": r["household"], "context": r["context"], "thermostat": r["thermostat"],
-        "address": address, "findings": routed["findings"], "reported": reported_items,
+        "address": address, "buckets": buckets,
+        "findings": routed["findings"], "reported": reported_items,
         "not_violations": routed["not_violations"], "refilm": routed["refilm"], "dropped": routed["dropped"],
-        "rights_explanation": None, "complaint_draft_en": None, "claims": [],
+        "rights_explanation": None, "complaint_draft_en": None, "claims": [], "disclaimer": write_verify.DISCLAIMER,
         "transcript": r["transcript"], "trace": tr.entries, "caseworker_job_id": None,
         "work_dir": r["work_dir"], "duration": r["duration"], "video_only": video_only,
         "no_audio": r["no_audio"], "frames_total": len(r["frame_checks"]),
@@ -172,23 +178,34 @@ def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event
     if on_partial:
         on_partial(json.loads(json.dumps(report)))
 
-    writing = tr.run("write", config.NEON, 1, write_verify.write, routed, r["household"], r["context"],
-                     reported_items)
+    writing = tr.run("write", config.NEON, 1, write_verify.write, buckets, r["household"], r["context"])
+    texts = {c["id"]: c for c in writing.get("cards", [])}
+    for b in buckets.values():
+        for c in b:
+            c["text"] = {k: texts[c["id"]].get(k) for k in ("what", "where", "why", "todo")} if c["id"] in texts else None
+    complaint_items = [c for k in write_verify.COMPLAINT_BUCKETS for c in buckets[k]]
     verified = tr.run("verify", config.DECISION, lambda v: len({c["finding_id"] for c in v}),
-                      write_verify.verify, writing.get("claims", []), routed["findings"],
-                      r["context"], r["transcript"], work)
-    # Claim check as a false-alarm filter: a finding whose every claim failed goes to "film again".
-    for f in list(routed["findings"]):
-        fc = [c for c in verified if c["finding_id"] == f["id"]]
-        if fc and not any(c["kept"] for c in fc):
+                      write_verify.verify, [c for c in writing.get("claims", [])
+                                            if c["finding_id"] in {i["id"] for i in complaint_items}],
+                      complaint_items, r["context"], r["transcript"], work)
+    # Claim check as a false-alarm filter: an item whose every claim failed goes to "Please confirm or film again".
+    for k in write_verify.COMPLAINT_BUCKETS:
+        for c in list(buckets[k]):
+            cl = [x for x in verified if x["finding_id"] == c["id"]]
+            if cl and not any(x["kept"] for x in cl):
+                buckets[k].remove(c)
+                c.update(bucket="confirm", claim_check_failed=True,
+                         reason="Our evidence check couldn't confirm this from the video. Please film it again, closer.")
+                if c.get("text"):
+                    c["text"]["todo"] = "Film it again, closer and steadier, then run a new walkthrough."
+                buckets["confirm"].append(c)
+    for f in list(routed["findings"]):            # keep the flat lists (used by the comparison view) in sync
+        if any(c["id"] == f["id"] for c in buckets["confirm"]):
             routed["findings"].remove(f)
-            f["refilm_reason"] = ("Our evidence check couldn't confirm this from the video. "
-                                  "Please film it again, closer and steadier.")
-            f["claim_check_failed"] = True
             routed["refilm"].append(f)
-    complaint = write_verify.assemble_complaint(writing.get("complaint_intro", ""), verified, routed,
-                                                r["household"], r["context"], reported_items, address)
-    report.update(findings=routed["findings"], refilm=routed["refilm"],
+    complaint = write_verify.assemble_complaint(writing.get("complaint_intro", ""), verified, buckets,
+                                                r["household"], r["context"], address)
+    report.update(buckets=buckets, findings=routed["findings"], refilm=routed["refilm"],
                   rights_explanation=writing.get("rights_explanation", ""), complaint_draft_en=complaint,
                   claims=verified, trace=tr.entries, complete=True)
     return report

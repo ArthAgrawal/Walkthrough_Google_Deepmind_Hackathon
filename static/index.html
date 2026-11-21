@@ -104,6 +104,12 @@
   .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; cursor: zoom-out; }
   .lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; }
   .err-card { border-color: var(--red); }
+  .pcard { gap: 8px; }
+  .pc-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pc-line { font-size: 1.05rem; }
+  .pc-what { font-size: 1.2rem; font-weight: 700; }
+  .pc-k { display: inline-block; min-width: 96px; color: var(--muted); font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .disclaimer { margin-top: 28px; padding: 14px 18px; border-radius: var(--radius); background: var(--gray-bg); color: var(--muted); font-weight: 600; }
   .err-card h3 { margin: 0 0 6px; color: var(--red); }
 </style>
 </head>
@@ -161,11 +167,11 @@
     <h2>What we heard</h2>
     <div class="card"><dl class="facts" id="facts"></dl></div>
 
-    <h2>🔴 Violations</h2>
-    <div id="list-findings"></div>
-    <div id="sec-reported"><h2>🗣 Reported by you</h2><div id="list-reported"></div></div>
-    <div id="sec-not"><h2>✅ Not a violation, and why</h2><div id="list-not"></div></div>
-    <div id="sec-refilm"><h2>⚠ Please confirm or film again</h2><div id="list-refilm"></div></div>
+    <div class="bucket" id="sec-b1"><h2>🔴 You reported it, and it's likely a violation</h2><div id="list-b1"></div></div>
+    <div class="bucket" id="sec-b3"><h2>🎥 We found it on your video, and it's likely a violation</h2><div id="list-b3"></div></div>
+    <div class="bucket" id="sec-b2"><h2>🟢 You reported it, but it's likely not a violation</h2><div id="list-b2"></div></div>
+    <div class="bucket" id="sec-confirm"><h2>⚠ Please confirm or film again</h2><div id="list-confirm"></div></div>
+    <details class="card" id="sec-other"><summary class="muted">Other things we checked (not violations)</summary><div id="list-other" style="margin-top:12px"></div></details>
     <div id="sec-building" class="hidden"><h2>🏢 Building history</h2><div id="building"></div></div>
 
     <h2>Your rights, explained</h2>
@@ -200,6 +206,7 @@
       <a id="b-log" class="btn" download="walkthrough-model-log.json">Download log</a>
     </details>
 
+    <p class="disclaimer">This is not legal advice. HPD decides on inspection. You review and file this yourself through 311.</p>
     <div class="row" style="margin-top:20px"><button id="b-new" class="primary">New walkthrough</button></div>
   </section>
 </main>
@@ -226,6 +233,7 @@ const STAGES = [
   ["route", "Re-checking uncertain findings", "Carbon"],
   ["classify", "Category and likely severity", "Decisions"],
   ["reported", "Checking the problems you mentioned", "Decisions"],
+  ["verdicts", "Checking each problem against official HPD rules", "Decisions"],
   ["write", "Writing your explanation and complaint", "Neon"],
   ["verify", "Checking every claim against the evidence", "Decisions"],
 ];
@@ -435,6 +443,30 @@ function card(f, base, kind) {
     ${kind === "refilm" ? `<div><button onclick="newWalkthrough()">${f.rule === "SMOKE_CO" ? "Film the detector" : "Film this spot again"}</button></div>` : ""}
   </div>`;
 }
+const mmss = (t) => t == null ? "" : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+const SEV_BADGE = { "immediately hazardous": ["Most serious", "red"], "hazardous": ["Serious", "amber"], "non-hazardous": ["Less serious", ""] };
+function cap(s) { s = String(s || ""); return s ? s[0].toUpperCase() + s.slice(1) : s; }
+function bucketCard(c, base) {
+  const t = c.text || {};
+  const what = t.what || (c.kind === "reported" ? cap(c.label) + "." : cap(c.label) + ".");
+  const where = (t.where || (c.room ? cap(c.room) : "")) + (c.t_start != null ? ` · ${mmss(c.t_start)}` : (c.kind === "reported" && !c.visible ? " · not shown on video" : ""));
+  const why = t.why || c.reason || c.facts || "";
+  const todo = t.todo || (c.bucket === "confirm" ? "Film it again, or report it to 311 if you're sure." : "Ask your landlord to fix it. If they don't, report it to 311.");
+  const sev = c.bucket === "reported_not_violation" ? null : SEV_BADGE[c.likely_severity];
+  const decided = DECIDED[c.decided_by] || c.decided_by;
+  return `<div class="card item pcard">
+    <div class="pc-top">${sev ? `<span class="badge ${sev[1]}">${sev[0]}</span>` : ""}
+      ${c.confidence != null ? `<span class="muted small">confidence ${(c.confidence * 100).toFixed(0)}%</span>` : ""}
+      <span class="chip">${esc(decided)}</span>
+      ${c.source_url ? `<a class="small" href="${esc(c.source_url)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
+    <div class="pc-line pc-what">${esc(what)}</div>
+    <div class="pc-line"><span class="pc-k">Where</span> ${esc(where)}</div>
+    ${thumbs(base, (c.evidence_frames || []).slice(0, 3), c.label)}
+    <div class="pc-line"><span class="pc-k">Why</span> ${esc(why)}</div>
+    ${c.quote ? `<div class="quote small" dir="auto">You said: “${esc(c.quote)}”</div>` : ""}
+    <div class="pc-line"><span class="pc-k">What to do</span> ${esc(todo)}</div>
+  </div>`;
+}
 function reportedCard(x, base) {
   const badge = x.visible ? '<span class="badge red">visible on video</span>' : '<span class="badge">not shown on video</span>';
   const note = x.visible ? "" : `<div class="muted">We couldn't see this in the video (some problems, like noises or appliances that don't work, can't be filmed). It is still listed in your complaint as your report.</div>`;
@@ -476,13 +508,17 @@ function renderResults(r) {
     + (h.units_quote ? `<dt></dt><dd class="quote" dir="auto">“${esc(h.units_quote)}”</dd>` : "")
     + (h.needs_confirmation ? `<dt></dt><dd><span class="badge amber">please confirm: we weren't sure about some of these</span></dd>` : "");
 
-  fill("list-findings", r.findings || [], (f) => card(f, base, "finding"), "No violations of the checked rules found in this video.");
-  $("sec-reported").classList.toggle("hidden", !(r.reported || []).length);
-  fill("list-reported", r.reported || [], (x) => reportedCard(x, base), "");
-  $("sec-not").classList.toggle("hidden", !(r.not_violations || []).length);
-  fill("list-not", r.not_violations || [], (f) => card(f, base, "not"), "");
-  $("sec-refilm").classList.toggle("hidden", !(r.refilm || []).length);
-  fill("list-refilm", r.refilm || [], (f) => card(f, base, "refilm"), "");
+  const B = r.buckets || {};
+  [["b1", "reported_violation"], ["b3", "found_violation"], ["b2", "reported_not_violation"], ["confirm", "confirm"]].forEach(([id, key]) => {
+    const items = B[key] || [];
+    $("sec-" + id).classList.toggle("hidden", !items.length);
+    $("list-" + id).innerHTML = items.map((c) => bucketCard(c, base)).join("");
+  });
+  const other = B.other_checks || [];
+  $("sec-other").classList.toggle("hidden", !other.length);
+  $("list-other").innerHTML = other.map((c) => `<div class="small" style="margin-bottom:6px">✅ <b>${esc(c.label)}</b> · ${esc(mmss(c.t_start))}: ${esc(c.facts || "")}</div>`).join("");
+  if (!["reported_violation", "found_violation", "reported_not_violation", "confirm"].some((k) => (B[k] || []).length))
+    $("list-b1").innerHTML = '<div class="card section-empty">We did not find any problems in this video.</div>', $("sec-b1").classList.remove("hidden");
 
   $("rights").textContent = r.rights_explanation || "Writing your explanation…";
   $("complaint").value = r.complaint_draft_en || "Writing and checking your complaint…";
