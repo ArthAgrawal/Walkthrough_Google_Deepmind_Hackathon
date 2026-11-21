@@ -56,14 +56,19 @@ flowchart LR
 9. **Classify**: one Decisions call per kept finding: HPD category (choice over the 14 real HPD categories) + likely severity (3-level score), medium-resolution evidence frame.
 10. **Reported problems** (`reported.py`): one Decisions call per thing the tenant said is wrong, on the frames filmed around when they said it → "visible on video" or "not shown".
 11. **Write + verify** (`write_verify.py`): Neon writes the explanation (tenant's language) and the complaint as separate factual claims; the Decisions API checks every claim against its evidence frame and the tenant's words; unsupported claims are removed, and a finding with no surviving claim goes to "film again".
-12. **Verdicts + buckets** (`verdict.py`, `hpd_reference.json`): every report is sorted into
+12. **Verdicts + buckets** (`verdict.py`, `data/hpd_reference.json`): every report is sorted into
     "You reported it, and it's likely a violation" / "You reported it, but it's likely not a violation" /
     "We found it on your video, and it's likely a violation" (+ "Please confirm or film again"), most serious first.
-    Rule-based findings keep their `rules.py` verdict; each tenant-reported problem gets one Decisions choice
-    (likely violation / likely not / unclear) against `hpd_reference.json`, a 29-row plain-language table built only
-    from official NYC sources (HPD ABCs of Housing, HPD heat/hot water, NYC311, HPD window guards, HPD mold & pests,
-    HPD leaks), where anything the sources don't clearly cover is marked "unclear". One Decisions call per clip asks
-    "did the tenant mention this?" for every video finding. Cards are written in plain language (What / Where / Why / What to do).
+    The reference is built from HPD's own data dictionary (Order Number tab of the violations dataset): 26 conditions,
+    each with its HPD order numbers, category, law text, a plain-language rule and its conditions (child ages, 3+ units),
+    plus 3 "not covered or unclear" entries (tenant-owned appliances, a single stove burner, noisy/slow appliances).
+    `rules.py` stays the source of truth for its 6 rules (now tagged with their HPD order numbers). Each tenant-reported
+    problem gets one Decisions call: closest reference entry (choice over all ids + "none") + likely severity; the
+    verdict follows the entry (owner must fix and conditions met → likely violation; a not-covered entry → its verdict;
+    no match → "We're not sure this is covered. You can still report it to 311."). One Decisions call per clip asks
+    "did the tenant mention this?" for every video finding. Cards are written in plain language
+    (What / Where / Why / What to do); "Why" comes only from the entry's plain rule, and the source line shows the
+    HPD order (e.g. "HPD order 790 · §27-2043.1").
 13. **Caseworker** (`caseworker/`): a Managed Agent looks up the building's HPD violation history in the background.
 
 ## Which model does what, and why

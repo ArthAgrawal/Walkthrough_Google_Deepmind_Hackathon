@@ -63,11 +63,14 @@ Buckets:
 1. cards: one per item in "items", same id, in English, each line ONE short sentence:
    - what: the problem in plain words, e.g. "Your window has no safety guard."
    - where: just the place, e.g. "Bedroom window" or "Kitchen ceiling" (use "room" if given; no time).
-   - why: why it is likely (or likely not) the owner's job, from "facts" and "plain_rule", mentioning the
-     tenant's own words if relevant (e.g. "You said your son is 6."). For reported_not_violation, explain kindly,
+   - why: why it is likely (or likely not) the owner's job. Base it ONLY on "plain_rule" and "facts"; never add any
+     rule that is not in plain_rule. Mention the tenant's own words if relevant (e.g. "You said your son is 6.").
+     For reported_not_violation, explain kindly,
      e.g. "A loud dishwasher is annoying, but it isn't listed as something the landlord must fix. You can still ask them."
      For confirm items whose reason says we're not sure, say: "We're not sure this is covered. You can still report it to 311."
-   - todo: one next step, e.g. "Ask your landlord to install guards. If they don't, report it to 311."
+   - todo: one or two next steps, e.g. "Ask your landlord to install guards. If they don't, report it to 311."
+     For likely violations you may add: "If your landlord says it's fixed but it isn't, you can challenge it when
+     HPD mails you a notice."
 2. rights_explanation, in {lang_name} (language code "{lang}"), same plain style, under 180 words: what is likely
    the owner's job, what likely isn't, what to film again or confirm, and how to report (call 311 or
    portal.311.nyc.gov; HPD inspects and decides). End with: "This is not legal advice."

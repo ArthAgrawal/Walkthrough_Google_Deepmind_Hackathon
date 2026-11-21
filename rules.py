@@ -30,6 +30,18 @@ SOURCE_BY_RULE = {
     "MOLD": "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page",
 }
 
+# HPD order numbers for each rule (from HPD's data dictionary, via data/hpd_reference.json). The rules above stay the
+# source of truth for WHEN something is flagged; these only say which HPD orders cover the condition.
+RULE_ORDERS = {
+    "WINDOW_GUARD": ["790", "791"],
+    "HEAT_DAY": ["664", "666", "964", "966"],
+    "HEAT_NIGHT": ["664", "666", "964", "966"],
+    "SMOKE_CO": ["701", "702", "1001", "1002", "1502", "1503"],
+    "LEAK": ["583", "883", "578", "579", "507"],
+    "MOLD": ["550"],
+    "PEELING_PAINT": ["616", "617", "626", "508", "808", "557", "857"],
+}
+
 # Plain-English names, used by Carbon prompts, the complaint and the UI.
 RULE_LABELS = {
     "WINDOW_GUARD": "window without a window guard",
@@ -95,7 +107,7 @@ def _finding(rule: str, seg: dict, is_violation: bool | None, explanation: str,
             "evidence_frame": seg["evidence_frame"], "confidence": round(seg["confidence"], 3),
             "category": None, "likely_severity": None, "decided_by": decided_by, "escalated": False,
             "is_violation": is_violation, "explanation": explanation, "tenant_quote": quote,
-            "source_url": SOURCE_BY_RULE[rule], **extra}
+            "source_url": SOURCE_BY_RULE[rule], "hpd_orders": RULE_ORDERS[rule], **extra}
 
 
 # ---------------------------------------------------------------- rules

@@ -38,26 +38,7 @@ MIN_CEILING_FRAMES = 2            # SMOKE_CO needs this many clear ceiling frame
 THERMOSTAT_MIN_P = 0.70           # step 5: read thermostat only if a frame has P(visible) >= this
 
 # --- Classify / route / verify (steps 8-11) ---
-# HPD categories: the 14 distinct `major_category` values in NYC Open Data "HPD Complaints and
-# Problems" (ygpa-z7cr, complaints received since 2025-01-01), ordered by frequency.
-# (The violations dataset wvxf-dwi5 has no category column, only class A/B/C.)
-# Option key -> short description for the Decisions choice question.
-HPD_CATEGORIES = {
-    "HEAT/HOT WATER": "No heat, low heat, or no hot water.",
-    "UNSANITARY CONDITION": "Mold, pests (roaches, mice, bedbugs), garbage, unsanitary surfaces.",
-    "PLUMBING": "Pipes, toilets, sinks, bathtubs, drains, water pressure, fixtures.",
-    "PAINT/PLASTER": "Peeling or flaking paint, damaged walls/ceilings/plaster, possible lead paint.",
-    "DOOR/WINDOW": "Windows, window guards, doors, locks, frames, glass.",
-    "WATER LEAK": "Leaks, drips, water stains or water damage.",
-    "GENERAL": "Other maintenance conditions (e.g. dirty public areas, cabinets, signage).",
-    "ELECTRIC": "Wiring, outlets, lighting, power.",
-    "FLOORING/STAIRS": "Floors, floor tiles, stairs, steps, handrails.",
-    "APPLIANCE": "Stove, oven, refrigerator, other appliances provided by the landlord.",
-    "SAFETY": "Smoke or carbon monoxide detectors, fire escapes, fire safety, other hazards.",
-    "LINE OF TRAVEL": "Obstructed or unsafe exits, hallways, paths of travel.",
-    "ELEVATOR": "Elevator not working or unsafe.",
-    "OUTSIDE BUILDING": "Building exterior, sidewalk, yard, roof, facade.",
-}
+# HPD_CATEGORIES is built at the bottom of this file from data/hpd_reference.json.
 # Likely severity (score levels 0..2). We never output official HPD classes.
 SEVERITY_LEVELS = [
     "non-hazardous: minor condition that should be fixed (e.g. small area of peeling paint, old stain)",
@@ -91,3 +72,22 @@ RAW_DIR = DATA_DIR / "raw"
 WORK_DIR = DATA_DIR / "work"      # per-clip frames/audio/outputs (gitignored)
 LOG_DIR = ROOT / "logs"
 MODEL_LOG = LOG_DIR / "model_calls.jsonl"
+
+
+# --- HPD categories (Decisions choice options) ---
+# The distinct HPD order "category" values used by the conditions in data/hpd_reference.json (from HPD's data
+# dictionary); description = the plain titles of the conditions in that category.
+def _hpd_categories() -> dict:
+    """{category: 'title; title'} from data/hpd_reference.json."""
+    import json
+    ref = json.loads((DATA_DIR / "hpd_reference.json").read_text(encoding="utf-8"))
+    cats: dict = {}
+    for c in ref["conditions"]:
+        for o in c["hpd_orders"]:
+            cats.setdefault(o["category"], [])
+            if c["title"] not in cats[o["category"]]:
+                cats[o["category"]].append(c["title"])
+    return {k: "; ".join(v)[:250] for k, v in cats.items()}
+
+
+HPD_CATEGORIES = _hpd_categories()

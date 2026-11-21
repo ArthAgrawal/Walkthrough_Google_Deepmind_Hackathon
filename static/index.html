@@ -458,7 +458,8 @@ function bucketCard(c, base) {
     <div class="pc-top">${sev ? `<span class="badge ${sev[1]}">${sev[0]}</span>` : ""}
       ${c.confidence != null ? `<span class="muted small">confidence ${(c.confidence * 100).toFixed(0)}%</span>` : ""}
       <span class="chip">${esc(decided)}</span>
-      ${c.source_url ? `<a class="small" href="${esc(c.source_url)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
+      ${c.source_url ? `<a class="small" href="${esc(c.source_url)}" target="_blank" rel="noopener">Source${c.source_line ? ": " + esc(c.source_line) : ""} ↗</a>`
+        : c.source_line ? `<span class="small muted">${esc(c.source_line)}</span>` : ""}</div>
     <div class="pc-line pc-what">${esc(what)}</div>
     <div class="pc-line"><span class="pc-k">Where</span> ${esc(where)}</div>
     ${thumbs(base, (c.evidence_frames || []).slice(0, 3), c.label)}
