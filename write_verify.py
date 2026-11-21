@@ -23,6 +23,8 @@ LANG_NAMES = {"en": "English", "es": "Spanish", "hi": "Hindi", "zh": "Chinese", 
               "ur": "Urdu", "pl": "Polish", "yi": "Yiddish", "it": "Italian", "pt": "Portuguese"}
 DISCLAIMER = "This is not legal advice. HPD decides on inspection. You review and file this yourself through 311."
 COMPLAINT_BUCKETS = ("reported_violation", "found_violation")
+CONTRADICTS_WHY = "Because the video shows it working, this likely isn't a violation right now."
+CONTRADICTS_TODO = "If it only fails sometimes, film it when it happens and run a new walkthrough."
 
 
 class Card(BaseModel):
@@ -62,6 +64,8 @@ Buckets:
 
 1. cards: one per item in "items", same id, in English, each line ONE short sentence:
    - what: the problem in plain words, e.g. "Your window has no safety guard."
+     If video_check is "contradicts": "You said <problem>, but in your video it <works normally>.", e.g.
+     "You said the toilet doesn't flush, but in your video it flushes normally." (use video_reason).
    - where: just the place, e.g. "Bedroom window" or "Kitchen ceiling" (use "room" if given; no time).
    - why: why it is likely (or likely not) the owner's job. Base it ONLY on "plain_rule" and "facts"; never add any
      rule that is not in plain_rule. Mention the tenant's own words if relevant (e.g. "You said your son is 6.").
@@ -86,7 +90,7 @@ JSON:
 def _item(c: dict) -> dict:
     """Card facts Neon needs."""
     keys = ("id", "bucket", "label", "room", "quote", "facts", "plain_rule", "reason", "likely_severity",
-            "visible", "t_start")
+            "visible", "t_start", "video_check", "video_reason")
     return {k: c[k] for k in keys if c.get(k) not in (None, "")}
 
 

@@ -105,6 +105,7 @@
   .lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; }
   .err-card { border-color: var(--red); }
   .pcard { gap: 8px; }
+  .clipvid { width: 100%; max-width: 420px; max-height: 260px; border-radius: 10px; background: #000; }
   .pc-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .pc-line { font-size: 1.05rem; }
   .pc-what { font-size: 1.2rem; font-weight: 700; }
@@ -168,8 +169,8 @@
     <div class="card"><dl class="facts" id="facts"></dl></div>
 
     <div class="bucket" id="sec-b1"><h2>🔴 You reported it, and it's likely a violation</h2><div id="list-b1"></div></div>
+    <div class="bucket" id="sec-b2"><h2>💬 You reported it, but it's likely not a violation</h2><div id="list-b2"></div></div>
     <div class="bucket" id="sec-b3"><h2>🎥 We found it on your video, and it's likely a violation</h2><div id="list-b3"></div></div>
-    <div class="bucket" id="sec-b2"><h2>🟢 You reported it, but it's likely not a violation</h2><div id="list-b2"></div></div>
     <div class="bucket" id="sec-confirm"><h2>⚠ Please confirm or film again</h2><div id="list-confirm"></div></div>
     <details class="card" id="sec-other"><summary class="muted">Other things we checked (not violations)</summary><div id="list-other" style="margin-top:12px"></div></details>
     <div id="sec-building" class="hidden"><h2>🏢 Building history</h2><div id="building"></div></div>
@@ -232,10 +233,11 @@ const STAGES = [
   ["rules", "Applying NYC housing rules", null],
   ["route", "Re-checking uncertain findings", "Carbon"],
   ["classify", "Category and likely severity", "Decisions"],
-  ["reported", "Checking the problems you mentioned", "Decisions"],
+  ["reported", "Checking what you reported against video clips", "Decisions"],
   ["verdicts", "Checking each problem against official HPD rules", "Decisions"],
   ["write", "Writing your explanation and complaint", "Neon"],
   ["verify", "Checking every claim against the evidence", "Decisions"],
+  ["rights", "Writing your rights explanation", "Neon"],
 ];
 const DECIDED = { decisions: "Decisions API", carbon: "Carbon re-check", "neon+rules": "Neon + rules" };
 
@@ -449,7 +451,11 @@ function cap(s) { s = String(s || ""); return s ? s[0].toUpperCase() + s.slice(1
 function bucketCard(c, base) {
   const t = c.text || {};
   const what = t.what || (c.kind === "reported" ? cap(c.label) + "." : cap(c.label) + ".");
-  const where = (t.where || (c.room ? cap(c.room) : "")) + (c.t_start != null ? ` · ${mmss(c.t_start)}` : (c.kind === "reported" && !c.visible ? " · not shown on video" : ""));
+  const place = t.where || (c.room ? cap(c.room) : "");
+  const where = c.kind === "reported"
+    ? place + (c.video_check === "contradicts" && c.t_start != null ? ` · ${mmss(c.t_start)}`
+      : c.t_start != null && c.visible ? ` · shown on video at ${mmss(c.t_start)}` : " · not shown on video")
+    : place + (c.t_start != null ? ` · ${mmss(c.t_start)}` : "");
   const why = t.why || c.reason || c.facts || "";
   const todo = t.todo || (c.bucket === "confirm" ? "Film it again, or report it to 311 if you're sure." : "Ask your landlord to fix it. If they don't, report it to 311.");
   const sev = c.bucket === "reported_not_violation" ? null : SEV_BADGE[c.likely_severity];
@@ -462,6 +468,7 @@ function bucketCard(c, base) {
         : c.source_line ? `<span class="small muted">${esc(c.source_line)}</span>` : ""}</div>
     <div class="pc-line pc-what">${esc(what)}</div>
     <div class="pc-line"><span class="pc-k">Where</span> ${esc(where)}</div>
+    ${c.clip ? `<video class="clipvid" src="${esc(base + c.clip)}" controls muted playsinline preload="metadata"></video>` : ""}
     ${thumbs(base, (c.evidence_frames || []).slice(0, 3), c.label)}
     <div class="pc-line"><span class="pc-k">Why</span> ${esc(why)}</div>
     ${c.quote ? `<div class="quote small" dir="auto">You said: “${esc(c.quote)}”</div>` : ""}
@@ -510,7 +517,7 @@ function renderResults(r) {
     + (h.needs_confirmation ? `<dt></dt><dd><span class="badge amber">please confirm: we weren't sure about some of these</span></dd>` : "");
 
   const B = r.buckets || {};
-  [["b1", "reported_violation"], ["b3", "found_violation"], ["b2", "reported_not_violation"], ["confirm", "confirm"]].forEach(([id, key]) => {
+  [["b1", "reported_violation"], ["b2", "reported_not_violation"], ["b3", "found_violation"], ["confirm", "confirm"]].forEach(([id, key]) => {
     const items = B[key] || [];
     $("sec-" + id).classList.toggle("hidden", !items.length);
     $("list-" + id).innerHTML = items.map((c) => bucketCard(c, base)).join("");

@@ -155,8 +155,9 @@ def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event
     tr.run("classify", config.DECISION, len(routed["findings"]),
            lambda: [classify_route.classify(f, r["household"], work) for f in routed["findings"]])
     reported_items = tr.run("reported", config.DECISION,
-                            lambda x: sum(i.get("p_visible") is not None for i in x),
-                            reported.check_reported, r["household"], r["frame_checks"], work)
+                            lambda x: sum(len(i.get("moments") or []) for i in x),
+                            reported.check_reported, r["household"], r["transcript"], r["frame_checks"], work,
+                            Path(video_path))
     for key in ("findings", "not_violations", "refilm"):
         attach_evidence_frames(routed[key], r["frame_checks"])
     sorted_ = tr.run("verdicts", config.DECISION,
@@ -183,6 +184,9 @@ def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event
     for b in buckets.values():
         for c in b:
             c["text"] = {k: texts[c["id"]].get(k) for k in ("what", "where", "why", "todo")} if c["id"] in texts else None
+            if c.get("video_check") == "contradicts":      # fixed wording for "the video shows it working"
+                c["text"] = {**(c["text"] or {"what": c["label"], "where": c.get("room") or ""}),
+                             "why": write_verify.CONTRADICTS_WHY, "todo": write_verify.CONTRADICTS_TODO}
     complaint_items = [c for k in write_verify.COMPLAINT_BUCKETS for c in buckets[k]]
     verified = tr.run("verify", config.DECISION, lambda v: len({c["finding_id"] for c in v}),
                       write_verify.verify, [c for c in writing.get("claims", [])

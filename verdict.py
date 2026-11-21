@@ -175,28 +175,86 @@ def reported_verdict(item: dict, household: dict | None, work_dir: Path) -> dict
     return {**out, "verdict": "unclear", "plain_rule": UNCLEAR_TEXT, "source_line": None, "source_url": None}
 
 
+# ---------------------------------------------------------------- normal-use water
+
+NORMAL_USE_P = 0.6
+
+
+def normal_use_water(f: dict, work_dir: Path) -> float:
+    """ONE Decisions call on a LEAK finding's evidence frames: is this water from normal use? Returns P(yes)."""
+    frames = (f.get("evidence_frames") or [f.get("evidence_frame")])[:3]
+    inp = [{"type": "text", "text": "Frames where a possible water leak was flagged in a tenant's apartment video:\n"}]
+    inp += [models.media_block(work_dir / fp, resolution=config.EVIDENCE_RESOLUTION) for fp in frames if fp]
+    a = models.decide(inp, {"normal_use": {
+        "type": "noul",
+        "instructions": "Is this water from normal use rather than a leak (e.g. in a sink basin, tub or toilet bowl, "
+                        "a running faucet, or a wet floor right after a shower)?",
+        "criteria": {"true_description": "Water is where it belongs during normal use (basin, bowl, tub, faucet stream).",
+                     "false_description": "Water or water damage where it should not be: stains, drips from a ceiling "
+                                          "or pipe, puddles from a leak."}}},
+        step="normal_use", purpose=f"is the flagged water at {f.get('t_start') or 0:.0f} s just normal use?",
+        key=lambda a: f"P(normal use)={a['normal_use'].noul:.2f}")
+    return a["normal_use"].noul
+
+
 # ---------------------------------------------------------------- buckets
+
+def _chain(*parts) -> list[str]:
+    """Ordered unique list of model names."""
+    out = []
+    for p in parts:
+        for x in (p if isinstance(p, list) else [p]):
+            if x and x not in out:
+                out.append(x)
+    return out
+
+
+def rule_chain(f: dict) -> list[str]:
+    """Models that touched a rules.py finding."""
+    return _chain("Decisions API", "Neon" if f["rule"].startswith("HEAT") else None,
+                  "Carbon" if f.get("escalated") else None)
+
 
 def _card(kind: str, bucket: str, base: dict, frame_checks: list[dict], **extra) -> dict:
     """Common card fields."""
     ev = base.get("evidence_frames") or ([base["evidence_frame"]] if base.get("evidence_frame") else [])
+    chain = base.get("decided_chain") or ["Decisions API"]
     return {"id": base["id"], "kind": kind, "bucket": bucket, "rule": base.get("rule"),
             "label": RULE_LABELS.get(base.get("rule"), base.get("text")), "t_start": base.get("t_start"),
             "t_end": base.get("t_end"), "evidence_frames": ev, "evidence_frame": ev[0] if ev else None,
             "room": room_of(frame_checks, ev[0]) if ev else None, "source_url": base.get("source_url"),
             "source_line": base.get("source_line"), "likely_severity": base.get("likely_severity"),
-            "confidence": base.get("confidence"), "decided_by": base.get("decided_by", "decisions"),
+            "confidence": base.get("confidence"), "decided_chain": chain, "decided_by": " → ".join(chain),
             "quote": base.get("tenant_quote") or base.get("quote"), "facts": base.get("explanation"),
             "plain_rule": base.get("plain_rule"), **extra}
 
 
 def build(routed: dict, reported_items: list[dict], frame_checks: list[dict], transcript: dict | None,
           household: dict | None, work_dir: Path) -> dict:
-    """Sort everything into buckets. Returns {"buckets": {...}, "mentions": {...}}."""
-    reported = list(reported_items)
-    visual = routed["findings"] + routed["not_violations"]
-    mentions = mention_checks(visual, reported, transcript, household)
+    """Sort everything into the 4 buckets (+ other_checks). Returns {"buckets", "mentions", "dropped_normal_use"}."""
+    work_dir = Path(work_dir)
     b = {"reported_violation": [], "reported_not_violation": [], "found_violation": [], "confirm": [], "other_checks": []}
+
+    # Ordinary use is not a problem: drop LEAK findings that are just water in a sink / tub / bowl.
+    dropped = []
+    for key in ("findings", "refilm"):
+        for f in list(routed[key]):
+            if f["rule"] != "LEAK":
+                continue
+            try:
+                p = normal_use_water(f, work_dir)
+            except Exception:
+                continue
+            f["p_normal_use"] = round(p, 3)
+            if p >= NORMAL_USE_P:
+                routed[key].remove(f)
+                f["route_reason"] = f"water from normal use (P={p:.2f})"
+                routed["dropped"].append(f)
+                dropped.append(f["id"])
+
+    reported = list(reported_items)
+    visual = routed["findings"] + routed["not_violations"] + routed["refilm"]
+    mentions = mention_checks(visual, reported, transcript, household)
 
     def rule_ref(f: dict) -> dict:
         """plain_rule + HPD order source for a rules.py finding."""
@@ -205,45 +263,65 @@ def build(routed: dict, reported_items: list[dict], frame_checks: list[dict], tr
         return {"plain_rule": e["plain_rule"] if e else None, "source_line": line,
                 "source_url": url or f.get("source_url"), "entry_id": e["id"] if e else None}
 
-    matched = set()
+    # Visual findings: merged into the matching reported problem (never shown twice), else bucket 3 / 4 / other.
+    merged_into: dict[str, list[dict]] = {}
     for f in visual:
         m = mentions.get(f["id"], {"mentioned": False, "p": None, "report_id": None})
         rep = next((r for r in reported if r["id"] == m["report_id"]), None)
         if rep:
-            matched.add(rep["id"])
-        said = m["mentioned"] or bool(rep)
-        if f in routed["findings"]:
-            bucket = "reported_violation" if said else "found_violation"
-        else:
-            bucket = "reported_not_violation" if said else "other_checks"
-        # Quote only what's relevant: the child quote for window guards, or the tenant's words when they mentioned it
-        # (rules.py attaches nearby narration, which can be about something else).
-        quote = (household or {}).get("child_quote") if f["rule"] == "WINDOW_GUARD" else None
-        if said:
-            quote = (rep or {}).get("quote") or f.get("tenant_quote") or quote
-        b[bucket].append(_card("rule", bucket, {**f, **rule_ref(f), "tenant_quote": quote, "quote": None},
-                               frame_checks, mentioned=said, p_mentioned=m["p"], is_violation=f["is_violation"]))
-    for f in routed["refilm"]:
-        b["confirm"].append(_card("rule", "confirm", {**f, **rule_ref(f), "tenant_quote": None, "quote": None},
-                                  frame_checks, reason=f.get("refilm_reason") or f.get("explanation")))
-
-    for r in reported:
-        if r["id"] in matched:
+            merged_into.setdefault(rep["id"], []).append(f)
             continue
+        quote = (household or {}).get("child_quote") if f["rule"] == "WINDOW_GUARD" else None
+        base = {**f, **rule_ref(f), "tenant_quote": quote, "quote": None, "decided_chain": rule_chain(f)}
+        if f in routed["refilm"]:
+            b["confirm"].append(_card("rule", "confirm", base, frame_checks,
+                                      reason=f.get("refilm_reason") or f.get("explanation")))
+        elif f in routed["findings"]:
+            bucket = "reported_violation" if m["mentioned"] else "found_violation"
+            if m["mentioned"]:
+                base["tenant_quote"] = f.get("tenant_quote") or quote
+                base["decided_chain"] = _chain("Hydrogen", base["decided_chain"])
+            b[bucket].append(_card("rule", bucket, base, frame_checks, mentioned=m["mentioned"],
+                                   p_mentioned=m["p"], is_violation=True))
+        else:
+            bucket = "reported_not_violation" if m["mentioned"] else "other_checks"
+            b[bucket].append(_card("rule", bucket, base, frame_checks, mentioned=m["mentioned"],
+                                   p_mentioned=m["p"], is_violation=False))
+
+    # Reported problems: video check (R1-R3, reported.py) + HPD verdict (R4) -> bucket.
+    for r in reported:
+        extra_vis = merged_into.get(r["id"], [])
+        vc = r.get("video_check", "not_shown")
+        if vc == "not_shown" and any(f in routed["findings"] for f in extra_vis):
+            vc = "supports"                           # the frame checks saw it (merged visual finding)
         try:
             v = reported_verdict(r, household, work_dir)
         except Exception as exc:
             v = {"verdict": "unclear", "plain_rule": UNCLEAR_TEXT, "error": type(exc).__name__}
-        base = {**r, "likely_severity": v.get("likely_severity"), "confidence": v.get("entry_confidence"),
-                "source_url": v.get("source_url"), "source_line": v.get("source_line"), "decided_by": "decisions",
-                "plain_rule": v.get("plain_rule"), "explanation": v.get("not_met") or v.get("plain_rule")}
-        bucket = {"likely_violation": "reported_violation", "likely_not_violation": "reported_not_violation"}.get(
-            v["verdict"], "confirm")
-        b[bucket].append(_card("reported", bucket, base, frame_checks, verdict=v["verdict"],
-                               entry_id=v.get("entry_id"), category=v.get("category"), visible=r.get("visible"),
-                               p_visible=r.get("p_visible"), t_said=r.get("t_said"),
-                               reason=(v.get("plain_rule") if v.get("entry_id") in NOT_COVERED else UNCLEAR_TEXT)
-                               if bucket == "confirm" else None))
+        chain = _chain(r.get("decided_chain") or [], [c for f in extra_vis for c in rule_chain(f)], "Decisions API")
+        ev = list(r.get("evidence_frames") or [])
+        for f in extra_vis:
+            ev += [x for x in (f.get("evidence_frames") or [f.get("evidence_frame")]) if x and x not in ev]
+        t0 = r.get("t_start")
+        if t0 is None and extra_vis and vc == "supports":
+            t0 = extra_vis[0].get("t_start")
+        base = {**r, "likely_severity": v.get("likely_severity"),
+                "confidence": r.get("confidence") if vc == "contradicts" else v.get("entry_confidence"),
+                "source_url": v.get("source_url"), "source_line": v.get("source_line"),
+                "plain_rule": v.get("plain_rule"), "explanation": v.get("not_met") or v.get("plain_rule"),
+                "decided_chain": chain, "evidence_frames": ev[:3], "t_start": t0, "t_end": t0}
+        if vc == "contradicts":
+            bucket, reason = "reported_not_violation", "Because the video shows it working, this likely isn't a violation right now."
+        elif v["verdict"] == "likely_not_violation":
+            bucket, reason = "reported_not_violation", None
+        elif v["verdict"] == "likely_violation":
+            bucket, reason = "reported_violation", None
+        else:
+            bucket, reason = "confirm", (v.get("plain_rule") if v.get("entry_id") in NOT_COVERED else UNCLEAR_TEXT)
+        b[bucket].append(_card("reported", bucket, base, frame_checks, verdict=v["verdict"], entry_id=v.get("entry_id"),
+                               category=v.get("category"), video_check=vc, video_reason=r.get("video_reason"),
+                               clip=r.get("clip"), merged=[f["id"] for f in extra_vis], t_said=r.get("t"),
+                               visible=vc in ("supports", "contradicts"), reason=reason))
     for k in b:
         b[k].sort(key=lambda c: (SEV_RANK.get(c.get("likely_severity"), 3), -(c.get("confidence") or 0)))
-    return {"buckets": b, "mentions": mentions}
+    return {"buckets": b, "mentions": mentions, "dropped_normal_use": dropped}

@@ -54,7 +54,15 @@ flowchart LR
 7. **Rules** (`rules.py`): plain Python, no LLM. Each rule cites its official source.
 8. **Route** (`classify_route.py`): confidence ≥ 0.70 → keep; 0.35–0.70 → Carbon re-checks the frames around it (max 3 per clip) → keep / drop / "film again"; < 0.35 → drop.
 9. **Classify**: one Decisions call per kept finding: HPD category (choice over the 14 real HPD categories) + likely severity (3-level score), medium-resolution evidence frame.
-10. **Reported problems** (`reported.py`): one Decisions call per thing the tenant said is wrong, on the frames filmed around when they said it → "visible on video" or "not shown".
+10. **Reported problems, checked as VIDEO** (`reported.py`): (R1) Neon finds every time the tenant talks about each
+    problem and the object to look for ("flush" → toilet); one Decisions call over all frames finds where that object is on
+    screen. (R2) For each moment, ffmpeg cuts a 9 s clip (t−3 s to t+6 s, with sound) and the Decisions API watches it as a
+    **video** block: supports / contradicts / not_shown, where "contradicts" requires the item to be clearly used AND working
+    (flush pressed AND water flushes). (R3) Any "contradicts", or any answer under 0.75, goes to Carbon (MEDIUM), which
+    watches the clip and has the final word. (R4) HPD verdict from `data/hpd_reference.json`. Video contradicts → bucket 2
+    ("You said the toilet doesn't flush, but in your video it flushes normally"). Visual findings the tenant mentioned are
+    merged into that report (never shown twice); water in a sink/tub/bowl is dropped by a "normal use?" Decisions check.
+    `scripts/check_buckets.py` is the regression test (problem | source | video check | HPD verdict | bucket | decided by).
 11. **Write + verify** (`write_verify.py`): Neon writes the explanation (tenant's language) and the complaint as separate factual claims; the Decisions API checks every claim against its evidence frame and the tenant's words; unsupported claims are removed, and a finding with no surviving claim goes to "film again".
 12. **Verdicts + buckets** (`verdict.py`, `data/hpd_reference.json`): every report is sorted into
     "You reported it, and it's likely a violation" / "You reported it, but it's likely not a violation" /
