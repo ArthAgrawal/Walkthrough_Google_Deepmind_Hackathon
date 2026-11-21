@@ -38,18 +38,25 @@ MIN_CEILING_FRAMES = 2            # SMOKE_CO needs this many clear ceiling frame
 THERMOSTAT_MIN_P = 0.70           # step 5: read thermostat only if a frame has P(visible) >= this
 
 # --- Classify / route / verify (steps 8-11) ---
-# Fixed HPD-style category list for now (option key -> description for the Decisions choice).
-# TODO: replace with the distinct category values from the HPD dataset (PLAN.md Section 8).
+# HPD categories: the 14 distinct `major_category` values in NYC Open Data "HPD Complaints and
+# Problems" (ygpa-z7cr, complaints received since 2025-01-01), ordered by frequency.
+# (The violations dataset wvxf-dwi5 has no category column, only class A/B/C.)
+# Option key -> short description for the Decisions choice question.
 HPD_CATEGORIES = {
     "HEAT/HOT WATER": "No heat, low heat, or no hot water.",
-    "DOOR/WINDOW": "Windows, window guards, doors, locks.",
+    "UNSANITARY CONDITION": "Mold, pests (roaches, mice, bedbugs), garbage, unsanitary surfaces.",
+    "PLUMBING": "Pipes, toilets, sinks, bathtubs, drains, water pressure, fixtures.",
+    "PAINT/PLASTER": "Peeling or flaking paint, damaged walls/ceilings/plaster, possible lead paint.",
+    "DOOR/WINDOW": "Windows, window guards, doors, locks, frames, glass.",
     "WATER LEAK": "Leaks, drips, water stains or water damage.",
-    "PLUMBING": "Pipes, toilets, sinks, drains, fixtures.",
-    "PAINT/PLASTER": "Peeling or flaking paint, damaged plaster, possible lead paint.",
-    "UNSANITARY CONDITION": "Mold, pests, garbage, unsanitary surfaces.",
-    "SAFETY": "Smoke or carbon monoxide detectors, fire safety, other hazards.",
-    "ELECTRIC": "Wiring, outlets, lighting.",
-    "GENERAL": "Other housing maintenance conditions.",
+    "GENERAL": "Other maintenance conditions (e.g. dirty public areas, cabinets, signage).",
+    "ELECTRIC": "Wiring, outlets, lighting, power.",
+    "FLOORING/STAIRS": "Floors, floor tiles, stairs, steps, handrails.",
+    "APPLIANCE": "Stove, oven, refrigerator, other appliances provided by the landlord.",
+    "SAFETY": "Smoke or carbon monoxide detectors, fire escapes, fire safety, other hazards.",
+    "LINE OF TRAVEL": "Obstructed or unsafe exits, hallways, paths of travel.",
+    "ELEVATOR": "Elevator not working or unsafe.",
+    "OUTSIDE BUILDING": "Building exterior, sidewalk, yard, roof, facade.",
 }
 # Likely severity (score levels 0..2). We never output official HPD classes.
 SEVERITY_LEVELS = [

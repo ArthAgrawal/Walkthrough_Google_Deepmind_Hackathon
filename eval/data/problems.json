@@ -1,0 +1,442 @@
+[
+ {
+  "id": "26501935",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: BROKEN OR MISSING. Location: lobby (public area)."
+ },
+ {
+  "id": "27259468",
+  "category": "APPLIANCE",
+  "text": "Problem: OVEN DOOR MISSING OR BROKEN. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26585068",
+  "category": "APPLIANCE",
+  "text": "Problem: PILOT LIGHT OUT. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26500043",
+  "category": "PLUMBING",
+  "text": "Problem: BOWL CRACKED OR LEAKING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26500967",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: WINDOW STUCK CLOSED OR OPEN. Location: living room (apartment)."
+ },
+ {
+  "id": "26518304",
+  "category": "SAFETY",
+  "text": "Problem: SPRINKLER PAINTED. Location: hallway (public area)."
+ },
+ {
+  "id": "27034791",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: HOLE IN WALKING AREA. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26501394",
+  "category": "PLUMBING",
+  "text": "Problem: BASIN MISSING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26500211",
+  "category": "GENERAL",
+  "text": "Problem: BROKEN OR MISSING. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26499275",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HEAT. Location: living room (apartment)."
+ },
+ {
+  "id": "26499133",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: FRAME BROKEN. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26993862",
+  "category": "APPLIANCE",
+  "text": "Problem: NO GAS OR ELECTRICITY. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26499314",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: ROACHES. Location: hallway (public area)."
+ },
+ {
+  "id": "26547483",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: NAILED OR LOCKED SHUT. Location: roof (public area)."
+ },
+ {
+  "id": "26694636",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: LEAKING. Location: roof (public area)."
+ },
+ {
+  "id": "26499005",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HEAT AND NO HOT WATER. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "26501658",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: PEELING OR FLAKING PAINT. Location: living room (apartment)."
+ },
+ {
+  "id": "26499298",
+  "category": "ELECTRIC",
+  "text": "Problem: ENTIRE BUILDING. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "26585069",
+  "category": "APPLIANCE",
+  "text": "Problem: BROKEN DOOR SEAL. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26499100",
+  "category": "PLUMBING",
+  "text": "Problem: CHIPPED OR RUSTED. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26554492",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: BLOCKED OR MISSING. Location: building entrance (public area)."
+ },
+ {
+  "id": "26511927",
+  "category": "GENERAL",
+  "text": "Problem: FALLING OFF WALL. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "26502121",
+  "category": "SAFETY",
+  "text": "Problem: CHILD UNDER 11. Location: living room (apartment)."
+ },
+ {
+  "id": "26498995",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HEAT. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "26500596",
+  "category": "ELECTRIC",
+  "text": "Problem: EXPOSED. Location: bedroom (apartment)."
+ },
+ {
+  "id": "26542389",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: BROKEN OR MISSING RAILING. Location: building entrance (public area)."
+ },
+ {
+  "id": "26541755",
+  "category": "APPLIANCE",
+  "text": "Problem: NO GAS. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26521644",
+  "category": "SAFETY",
+  "text": "Problem: SYSTEM BROKEN OR MISSING. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "26509947",
+  "category": "ELEVATOR",
+  "text": "Problem: DIRTY OR UNSANITARY. Location: elevator (public area)."
+ },
+ {
+  "id": "26541292",
+  "category": "WATER LEAK",
+  "text": "Problem: FROM WALL OR CEILING. Location: hallway (public area)."
+ },
+ {
+  "id": "26501995",
+  "category": "ELECTRIC",
+  "text": "Problem: FIXTURE SPARKS WHEN TURNED ON. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26499037",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HOT WATER. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "26511659",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: FRAME BROKEN. Location: building entrance (public area)."
+ },
+ {
+  "id": "27079335",
+  "category": "WATER LEAK",
+  "text": "Problem: FROM WALL OR CEILING. Location: bedroom (apartment)."
+ },
+ {
+  "id": "27266016",
+  "category": "WATER LEAK",
+  "text": "Problem: AT WALL OR CEILING. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26525230",
+  "category": "LINE OF TRAVEL",
+  "text": "Problem: SCD SURVEY RESULTS. Location: entire building (apartment)."
+ },
+ {
+  "id": "26499291",
+  "category": "ELECTRIC",
+  "text": "Problem: OUTLET SEALED OR DEFECTIVE. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26501660",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: N/A. Location: living room (apartment)."
+ },
+ {
+  "id": "27026127",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: BROKEN OR CRACKED. Location: yard (public area)."
+ },
+ {
+  "id": "26499154",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: BULGING/HOLE/CRACKED. Location: bedroom (apartment)."
+ },
+ {
+  "id": "26499102",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: BULGING/HOLE/CRACKED. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "26502333",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: CHIPPED/PEELING/FLAKING. Location: building entrance (public area)."
+ },
+ {
+  "id": "26499128",
+  "category": "GENERAL",
+  "text": "Problem: INACCESSIBLE. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "27018854",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: FLOOR COVERING TORN OR MISSING. Location: private hall (apartment)."
+ },
+ {
+  "id": "26511814",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: COLLAPSING OR FALLING. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26979298",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: BROKEN OR CRACKED. Location: building entrance (public area)."
+ },
+ {
+  "id": "26499079",
+  "category": "PLUMBING",
+  "text": "Problem: BROKEN OR MISSING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26524246",
+  "category": "WATER LEAK",
+  "text": "Problem: FROM WALL OR CEILING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26501707",
+  "category": "ELECTRIC",
+  "text": "Problem: ONE ROOM OR AREA. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26502265",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: WINDOW STUCK CLOSED OR OPEN. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26499025",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: ACCUMULATION. Location: hallway (public area)."
+ },
+ {
+  "id": "26499012",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HEAT AND NO HOT WATER. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "27003041",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: TILE BROKEN OR MISSING. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26510457",
+  "category": "ELECTRIC",
+  "text": "Problem: DIMS OR FLICKERS. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26499431",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: BULGING/HOLE/CRACKED. Location: living room (apartment)."
+ },
+ {
+  "id": "26500124",
+  "category": "PLUMBING",
+  "text": "Problem: SINK DETACHED FROM WALL. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26499299",
+  "category": "GENERAL",
+  "text": "Problem: SHUT-OFF. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "26525507",
+  "category": "ELEVATOR",
+  "text": "Problem: GLASS OR MIRROR BROKEN. Location: elevator (public area)."
+ },
+ {
+  "id": "26499256",
+  "category": "PLUMBING",
+  "text": "Problem: DRAIN PIPE BLOCKED OR BROKEN. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26719024",
+  "category": "APPLIANCE",
+  "text": "Problem: CONTROL KNOB BROKEN OR MISSING. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26499009",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: ACCUMULATION. Location: building entrance (public area)."
+ },
+ {
+  "id": "26499343",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HOT WATER. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26512697",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: LOCK BROKEN OR MISSING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26499195",
+  "category": "PLUMBING",
+  "text": "Problem: NO WATER. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26500108",
+  "category": "PAINT/PLASTER",
+  "text": "Problem: CHIPPED/PEELING/FLAKING. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26499221",
+  "category": "GENERAL",
+  "text": "Problem: DAMAGED OR MISSING. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26759147",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: SAGGING OR SLOPING. Location: bathroom (apartment)."
+ },
+ {
+  "id": "26499010",
+  "category": "HEAT/HOT WATER",
+  "text": "Problem: NO HEAT. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "27003868",
+  "category": "OUTSIDE BUILDING",
+  "text": "Problem: BROKEN OR CRACKED. Location: courtyard (public area)."
+ },
+ {
+  "id": "26499571",
+  "category": "ELECTRIC",
+  "text": "Problem: ONE ROOM OR AREA. Location: private hall (apartment)."
+ },
+ {
+  "id": "26632631",
+  "category": "WATER LEAK",
+  "text": "Problem: AT WALL OR CEILING. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26808477",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: SAGGING OR SLOPING. Location: private hall (apartment)."
+ },
+ {
+  "id": "26579085",
+  "category": "WATER LEAK",
+  "text": "Problem: AT WALL OR CEILING. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "26499035",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: MICE. Location: entire apartment (apartment)."
+ },
+ {
+  "id": "27276613",
+  "category": "ELEVATOR",
+  "text": "Problem: LIGHT FIXTURE BROKEN. Location: elevator (public area)."
+ },
+ {
+  "id": "26766615",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: TILE BROKEN OR MISSING. Location: lobby (public area)."
+ },
+ {
+  "id": "26499628",
+  "category": "DOOR/WINDOW",
+  "text": "Problem: BROKEN OR MISSING. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26501414",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: MICE. Location: compactor closet (public area)."
+ },
+ {
+  "id": "26500003",
+  "category": "UNSANITARY CONDITION",
+  "text": "Problem: N/A. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26996824",
+  "category": "FLOORING/STAIRS",
+  "text": "Problem: HOLE IN NON-WALKING AREA. Location: bedroom (apartment)."
+ },
+ {
+  "id": "26527298",
+  "category": "SAFETY",
+  "text": "Problem: SYSTEM BROKEN OR MISSING. Location: hallway (public area)."
+ },
+ {
+  "id": "27074649",
+  "category": "APPLIANCE",
+  "text": "Problem: NO STOVE KNOB COVERS. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26499626",
+  "category": "SAFETY",
+  "text": "Problem: CHILD UNDER 11. Location: other room/area (apartment)."
+ },
+ {
+  "id": "26509938",
+  "category": "GENERAL",
+  "text": "Problem: INACCESSIBLE. Location: building entrance (public area)."
+ },
+ {
+  "id": "26499826",
+  "category": "GENERAL",
+  "text": "Problem: ESSENTIAL SERVICE POSTING. Location: building-wide (building-wide)."
+ },
+ {
+  "id": "27263020",
+  "category": "WATER LEAK",
+  "text": "Problem: FROM WALL OR CEILING. Location: entrance/foyer (apartment)."
+ },
+ {
+  "id": "26502120",
+  "category": "SAFETY",
+  "text": "Problem: CHILD UNDER 11. Location: kitchen (apartment)."
+ },
+ {
+  "id": "26557583",
+  "category": "SAFETY",
+  "text": "Problem: SYSTEM BROKEN OR MISSING. Location: entire apartment (apartment)."
+ }
+]
