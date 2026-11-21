@@ -71,9 +71,7 @@ Buckets:
    - todo: one or two next steps, e.g. "Ask your landlord to install guards. If they don't, report it to 311."
      For likely violations you may add: "If your landlord says it's fixed but it isn't, you can challenge it when
      HPD mails you a notice."
-2. rights_explanation, in {lang_name} (language code "{lang}"), same plain style, under 180 words: what is likely
-   the owner's job, what likely isn't, what to film again or confirm, and how to report (call 311 or
-   portal.311.nyc.gov; HPD inspects and decides). End with: "This is not legal advice."
+2. rights_explanation: return an empty string (it is written later from the final buckets).
 3. complaint_intro, in English, plain: 1-2 sentences from the tenant asking HPD to inspect. Use "[ADDRESS, APT]".
 4. claims, in English, plain, FIRST PERSON as the tenant writing to HPD ("My bedroom window has no guard.",
    "My son is 6.", "The video shows water stains on my ceiling."), never "the tenant": ONLY for items in buckets
@@ -105,6 +103,44 @@ def write(buckets: dict, household: dict | None, context: dict) -> dict:
         key=lambda r: (lambda d: f"{len(d.get('cards', []))} cards, {len(d.get('claims', []))} claims")(models.parse_json(r)),
     )
     return models.parse_json(resp)
+
+
+RIGHTS_PROMPT = """Write a short explanation for a New York City tenant, in {lang_name} (language code "{lang}"),
+at about an 8th-grade reading level: short sentences, everyday words, no jargon, no law numbers, say "likely".
+No legal advice, no health claims. Use ONLY the final lists below; do not add or drop any item; invent nothing.
+
+- likely_landlords_job: say these are likely the landlord's job to fix (name each one).
+- likely_not_covered: say these are likely not covered by housing rules, kindly (name each one). Skip if empty.
+- not_sure ({n_confirm} item(s)): {confirm_rule}
+Then: how to report: call 311 or use portal.311.nyc.gov; HPD inspects and decides.
+End with: "This is not legal advice." Under 170 words.
+
+{data}
+"""
+
+
+def _names(items: list[dict]) -> list[str]:
+    """Plain item names for the rights explanation."""
+    return [((c.get("text") or {}).get("what") or c.get("label") or "").strip() for c in items]
+
+
+def write_rights(buckets: dict, household: dict | None) -> str:
+    """NEON: rights explanation in the tenant's language, generated ONLY from the FINAL buckets."""
+    lang = (household or {}).get("language") or "en"
+    n = len(buckets.get("confirm", []))
+    confirm_rule = (f'say exactly (translated if needed): "We weren\'t sure about {n} thing(s): please film again or '
+                    f'confirm." and name them. Never say nothing needs to be filmed again.' if n else
+                    "there are none: do not mention filming again.")
+    data = {"likely_landlords_job": _names(buckets["reported_violation"] + buckets["found_violation"]),
+            "likely_not_covered": _names(buckets["reported_not_violation"]), "not_sure": _names(buckets["confirm"])}
+    resp = models.neon(RIGHTS_PROMPT.format(lang=lang, lang_name=LANG_NAMES.get(lang, lang), n_confirm=n,
+                                            confirm_rule=confirm_rule, data=json.dumps(data, ensure_ascii=False, indent=1)),
+                       step="rights", purpose=f"rights explanation ({LANG_NAMES.get(lang, lang)}) from the final buckets",
+                       key=lambda r: f"{len(r.text or '')} chars")
+    text = (resp.text or "").strip()
+    if n and lang == "en" and "weren't sure" not in text.lower():   # guarantee the sentence in English
+        text += f"\n\nWe weren't sure about {n} thing(s): please film again or confirm."
+    return text
 
 
 def verify(claims: list[dict], items: list[dict], context: dict, transcript: dict | None,
@@ -166,8 +202,11 @@ def assemble_complaint(intro: str, verified: list[dict], buckets: dict, househol
         rows = []
         for c in buckets.get(key, []):
             txt = " ".join(x["text"].strip() for x in kept if x["finding_id"] == c["id"])
-            if not txt:
-                continue
+            if not txt:   # no claim written for it: still list it, from its card / label (every bucket 1+3 item appears)
+                label = str(c.get("label") or "problem").strip().rstrip(".")
+                txt = f"{label[:1].upper()}{label[1:]}."
+                if c.get("quote") and c["kind"] == "reported":
+                    txt += f' I said: "{c["quote"]}"'
             when = f" (video {int(c['t_start']) // 60}:{int(c['t_start']) % 60:02d})" if c.get("t_start") is not None else ""
             rows.append(f"- {txt}{when}")
         if rows:

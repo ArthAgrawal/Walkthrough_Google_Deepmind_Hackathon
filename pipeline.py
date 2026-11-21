@@ -205,7 +205,8 @@ def _run(video_path, intro_override, video_only, local_time, outdoor_f, on_event
             routed["refilm"].append(f)
     complaint = write_verify.assemble_complaint(writing.get("complaint_intro", ""), verified, buckets,
                                                 r["household"], r["context"], address)
+    rights = tr.run("rights", config.NEON, 1, write_verify.write_rights, buckets, r["household"])
     report.update(buckets=buckets, findings=routed["findings"], refilm=routed["refilm"],
-                  rights_explanation=writing.get("rights_explanation", ""), complaint_draft_en=complaint,
+                  rights_explanation=rights, complaint_draft_en=complaint,
                   claims=verified, trace=tr.entries, complete=True)
     return report
