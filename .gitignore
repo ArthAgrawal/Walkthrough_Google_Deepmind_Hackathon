@@ -1,0 +1,22 @@
+# Secrets: NEVER commit the API key
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Data we must not push (friends' videos, raw media, extracted frames/audio)
+data/raw/
+data/work/
+*.mp4
+*.webm
+*.mov
+*.wav
+*.mp3
+
+# Model-call logs (contain prompts/transcripts)
+logs/
