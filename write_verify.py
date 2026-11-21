@@ -113,7 +113,7 @@ def verify(claims: list[dict], findings: list[dict], context: dict, transcript: 
             for i, c in enumerate(group)}
         answers = models.decide(
             [{"type": "text", "text": text},
-             models.media_block(work_dir / f["evidence_frame"], resolution=config.FRAME_RESOLUTION)],
+             models.media_block(work_dir / f["evidence_frame"], resolution=config.EVIDENCE_RESOLUTION)],
             questions, step="verify",
             purpose=f"check {len(group)} complaint claim(s) about {RULE_LABELS[f['rule']]} against the evidence",
             key=lambda a: (f"{sum(x.noul >= config.VERIFY_MIN_P for x in a.values())}/{len(a)} supported "

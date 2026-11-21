@@ -22,9 +22,10 @@ CALL_TIMEOUT_S = 90               # per text-model request; timeouts are not ret
 CARBON_TIMEOUT_S = 45             # Carbon re-check; on timeout the finding goes to "film again"
 
 # Decisions API image resolution for per-frame checks
-FRAME_RESOLUTION = "low"
+FRAME_RESOLUTION = "low"          # per-frame checks
+EVIDENCE_RESOLUTION = "medium"    # evidence frames: classify, reported-problem checks, claim verification
 FRAME_WIDTH = 768                 # px, frames extracted by ingest.py
-DECISION_WORKERS = 4              # parallel per-frame Decisions calls (keep modest: temp accounts)
+DECISION_WORKERS = 8              # parallel per-frame Decisions calls (keep modest: temp accounts)
 
 # --- Context (step 6) ---
 TIMEZONE = "America/New_York"
@@ -60,13 +61,17 @@ SEVERITY_LEVELS = [
 SEVERITY_NAMES = ["non-hazardous", "hazardous", "immediately hazardous"]
 CARBON_WINDOW_S = 5.0             # Carbon re-checks frames within ±5 s of a finding
 CARBON_MAX_FRAMES = 3             # at most this many frames sent to Carbon per re-check
-CARBON_MAX_PER_CLIP = 2           # budget: more uncertain findings than this go to "film again"
+CARBON_MAX_PER_CLIP = 3           # budget: more uncertain findings than this go to "film again"
 VERIFY_MIN_P = 0.50               # claims with P(supported) below this are removed from the draft
 
 # --- Thresholds ---
 CONF_HIGH = 0.70   # include finding
-CONF_LOW  = 0.40   # below this, drop; between LOW and HIGH -> Carbon re-check or "film again"
-FPS = 1            # frames per second sampled from video
+CONF_LOW  = 0.35   # below this, drop; between LOW and HIGH -> Carbon re-check or "film again"
+                   # (low on purpose: favour catching problems; Carbon + claim check filter false alarms)
+FPS = 1            # frames per second for clips <= MAX_FRAMES seconds
+MAX_FRAMES = 40    # longer clips are sampled evenly down to this many frames
+DEDUP_DIFF = 3.0   # mean abs pixel diff (0-255, 64x36 grayscale) below this = near-duplicate frame
+DEDUP_MAX_RUN = 2  # never skip more than this many frames in a row
 
 # --- Retry (PLAN.md Section 3): first try + retries after 1 s, 2 s, 4 s ---
 RETRY_DELAYS_S = (1, 2, 4)

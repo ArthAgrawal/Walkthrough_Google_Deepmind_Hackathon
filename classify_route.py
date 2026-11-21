@@ -143,7 +143,7 @@ def classify(finding: dict, household: dict | None, work_dir: Path) -> dict:
             f"Details: {finding['explanation']}\n{_household_text(household)}\n")
     answers = models.decide(
         [{"type": "text", "text": text},
-         models.media_block(work_dir / finding["evidence_frame"], resolution=config.FRAME_RESOLUTION)],
+         models.media_block(work_dir / finding["evidence_frame"], resolution=config.EVIDENCE_RESOLUTION)],
         {
             "category": {"type": "choice",
                          "instructions": "Which NYC HPD complaint category fits this condition?",

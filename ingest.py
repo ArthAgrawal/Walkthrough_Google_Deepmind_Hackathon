@@ -1,10 +1,12 @@
-"""Step 1: ffmpeg -> frames at config.FPS (JPEG, 768 px wide) + mono mp3 audio track."""
+"""Step 1: ffmpeg -> frames (1 fps, max 40, near-duplicates skipped; JPEG 768 px wide) + mono mp3 audio."""
 from __future__ import annotations
 
 import json
 import shutil
 import subprocess
 from pathlib import Path
+
+from PIL import Image
 
 import config
 
@@ -52,11 +54,16 @@ def ingest(video_path: str | Path, work_dir: str | Path | None = None) -> dict:
     frames_dir.mkdir(parents=True)
 
     meta = probe(video_path)
+    fps = sampling_fps(meta["duration"])
     _run(["ffmpeg", "-y", "-v", "error", "-i", str(video_path),
-          "-vf", f"fps={config.FPS},scale={config.FRAME_WIDTH}:-2",
+          "-vf", f"fps={fps:.5f},scale={config.FRAME_WIDTH}:-2",
           "-q:v", "3", "-start_number", "0", str(frames_dir / "%04d.jpg")])
-    frames = [{"t": round(int(p.stem) / config.FPS, 2), "frame_path": f"frames/{p.name}"}
-              for p in sorted(frames_dir.glob("*.jpg"))]
+    all_frames = [{"t": round(int(p.stem) / fps, 2), "frame_path": f"frames/{p.name}"}
+                  for p in sorted(frames_dir.glob("*.jpg"))]
+    if len(all_frames) > config.MAX_FRAMES:   # duration unknown (e.g. webm "N/A"): thin evenly
+        step = len(all_frames) / config.MAX_FRAMES
+        all_frames = [all_frames[int(i * step)] for i in range(config.MAX_FRAMES)]
+    frames = drop_near_duplicates(all_frames, work)
 
     audio_path = None
     if meta["has_audio"]:
@@ -64,5 +71,35 @@ def ingest(video_path: str | Path, work_dir: str | Path | None = None) -> dict:
         _run(["ffmpeg", "-y", "-v", "error", "-i", str(video_path), "-vn",
               "-ac", "1", "-ar", "16000", "-b:a", "64k", str(audio_path)])
 
-    duration = meta["duration"] or len(frames) / config.FPS
-    return {"work_dir": work, "duration": duration, "frames": frames, "audio_path": audio_path}
+    duration = meta["duration"] or (all_frames[-1]["t"] + 1 / fps if all_frames else 0.0)
+    return {"work_dir": work, "duration": duration, "frames": frames, "audio_path": audio_path,
+            "fps": fps, "frames_extracted": len(all_frames), "frames_skipped_dup": len(all_frames) - len(frames)}
+
+
+def sampling_fps(duration: float) -> float:
+    """config.FPS for clips up to MAX_FRAMES seconds; longer clips get MAX_FRAMES frames spread evenly."""
+    if duration and duration > config.MAX_FRAMES / config.FPS:
+        return config.MAX_FRAMES / duration
+    return float(config.FPS)
+
+
+def _thumb(path: Path) -> list[int]:
+    """64x36 grayscale pixels for cheap frame comparison."""
+    with Image.open(path) as im:
+        return list(im.convert("L").resize((64, 36)).getdata())
+
+
+def drop_near_duplicates(frames: list[dict], work: Path) -> list[dict]:
+    """Skip frames nearly identical to the last kept one (mean abs diff < DEDUP_DIFF),
+    but never more than DEDUP_MAX_RUN in a row."""
+    kept, last, run = [], None, 0
+    for f in frames:
+        px = _thumb(work / f["frame_path"])
+        if last is not None and run < config.DEDUP_MAX_RUN:
+            diff = sum(abs(a - b) for a, b in zip(px, last)) / len(px)
+            if diff < config.DEDUP_DIFF:
+                run += 1
+                continue
+        kept.append(f)
+        last, run = px, 0
+    return kept
