@@ -14,7 +14,7 @@ import config  # noqa: E402
 import models  # noqa: E402
 
 CHECKS = {
-    "Hydrogen": lambda: models.hydrogen("Reply with: ok", step="warmup", thinking="MINIMAL").text,
+    "Hydrogen": lambda: models.hydrogen("Reply with: ok", step="warmup").text,
     "Neon": lambda: models.neon("Reply with: ok", step="warmup").text,
     "Carbon": lambda: models.carbon("Reply with: ok", step="warmup", thinking="LOW").text,
     "Decisions": lambda: f"P(yes)={models.decide('The radiator is cold.', {'cold': {'type': 'noul', 'instructions': 'Is the radiator cold?'}}, step='warmup')['cold'].noul:.2f}",

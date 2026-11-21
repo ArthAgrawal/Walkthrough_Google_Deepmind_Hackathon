@@ -98,7 +98,31 @@ and labels the card "Direct Open Data lookup" (the fallback was not needed in te
 
 ## Evaluation
 
-EVAL_RESULTS_PLACEHOLDER
+**On real NYC HPD records** (text only, public NYC Open Data; details in [`eval/results.md`](eval/results.md)):
+
+| Task | n | Truth | Decisions API | Neon baseline |
+|---|---|---|---|---|
+| HPD category (14 classes) | 88 | category the complaint was filed under (`ygpa-z7cr`) | 67% | 74% |
+| Likely severity (3 levels) | 200 | HPD class A/B/C of real violations (`wvxf-dwi5`) | 55% | 62% |
+| Category, **Decisions confidence ≥ 0.9** | 41 of 88 | same | **98%** | n/a |
+
+Honest read: on plain text, a Neon call labelling 20 records at once beat one Decisions call per record on raw
+accuracy. What the Decisions API gives us is a confidence that means something: for category, answers at ≥ 0.9
+confidence are right 98% of the time; the misses are inputs that are genuinely ambiguous. That is what the pipeline
+routes on (keep / Carbon re-check / drop). Likely severity is our weak spot (it under-calls HPD class C); it is
+logged as an open item in [`eval/FAILURES.md`](eval/FAILURES.md) and was not tuned on the test set.
+
+![accuracy](eval/charts/category_accuracy.png) ![calibration](eval/charts/calibration.png)
+
+**On video:** `eval/eval_clips.py` (full pipeline vs video-only vs one-call Neon baseline, match = same rule within ±3 s)
+is ready but not yet run: we don't have a labelled clip set yet. What we have shown on real footage
+(`venue_01`, a 70 s walkthrough, 4 adults, no children): with the spoken facts, the 3 unguarded windows are
+correctly **not violations**; with audio ignored, the same frames give **1 violation + 2 "film again"**.
+Same video, different words, different answer.
+
+**Failure log:** [`eval/FAILURES.md`](eval/FAILURES.md): Neon 13 s → 2.5 s (thinking LOW); Carbon re-check
+265 s → 17 s (MEDIUM, 3 frames, deadline), end-to-end ~5 min → 36 s; deadline errors no longer retried;
+claim check now demotes unverified findings; severity under-calls class C (open).
 
 ## Limitations (said plainly)
 
