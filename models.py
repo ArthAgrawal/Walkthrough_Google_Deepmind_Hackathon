@@ -151,10 +151,30 @@ def _call_with_retry(fn: Callable[[], Any], record: dict) -> Any:
 
 # ---------------------------------------------------------------- text models
 
+def _with_thinking(config_: types.GenerateContentConfig | dict | None,
+                   thinking: str | None) -> types.GenerateContentConfig:
+    """Return a GenerateContentConfig with thinking_level set, unless the caller already set one."""
+    if config_ is None:
+        cfg = types.GenerateContentConfig()
+    elif isinstance(config_, dict):
+        cfg = types.GenerateContentConfig.model_validate(config_)
+    else:
+        cfg = config_.model_copy(deep=True)
+    if thinking and cfg.thinking_config is None:
+        cfg.thinking_config = types.ThinkingConfig(thinking_level=thinking)
+    return cfg
+
+
 def generate(model: str, contents: Any, config_: types.GenerateContentConfig | dict | None = None,
-             step: str = "") -> types.GenerateContentResponse:
-    """Call a text/multimodal Gemini model (HYDROGEN/NEON/CARBON) with retry + logging."""
+             step: str = "", thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
+    """Call a text/multimodal Gemini model (HYDROGEN/NEON/CARBON) with retry + logging.
+
+    `thinking` sets ThinkingConfig.thinking_level (MINIMAL/LOW/MEDIUM/HIGH/XHIGH); defaults to
+    config.THINKING_DEFAULT. Pass thinking=None to use the model's own default.
+    A thinking_config already inside `config_` wins over `thinking`.
+    """
     client = get_client()
+    config_ = _with_thinking(config_, thinking)
     record = {"ts": datetime.now(timezone.utc).isoformat(), "kind": "generate", "step": step,
               "model": model, "prompt": contents, "config": config_}
     resp = _call_with_retry(
@@ -169,19 +189,33 @@ def generate(model: str, contents: Any, config_: types.GenerateContentConfig | d
     return resp
 
 
-def hydrogen(contents: Any, config_=None, step: str = "") -> types.GenerateContentResponse:
+def hydrogen(contents: Any, config_=None, step: str = "",
+             thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
     """Fast model: transcription, quick scans."""
-    return generate(config.HYDROGEN, contents, config_, step)
+    return generate(config.HYDROGEN, contents, config_, step, thinking)
 
 
-def neon(contents: Any, config_=None, step: str = "") -> types.GenerateContentResponse:
+def neon(contents: Any, config_=None, step: str = "",
+         thinking: str | None = config.THINKING_DEFAULT) -> types.GenerateContentResponse:
     """Understanding + writing model: household facts, thermostat reading, complaint text."""
-    return generate(config.NEON, contents, config_, step)
+    return generate(config.NEON, contents, config_, step, thinking)
 
 
-def carbon(contents: Any, config_=None, step: str = "") -> types.GenerateContentResponse:
-    """Hard-cases model: re-checks uncertain findings."""
-    return generate(config.CARBON, contents, config_, step)
+def carbon(contents: Any, config_=None, step: str = "",
+           thinking: str | None = config.THINKING_CARBON) -> types.GenerateContentResponse:
+    """Hard-cases model: re-checks uncertain findings (higher thinking by default)."""
+    return generate(config.CARBON, contents, config_, step, thinking)
+
+
+def parse_json(resp: types.GenerateContentResponse) -> Any:
+    """Return the parsed JSON body of a response made with response_mime_type='application/json'."""
+    if getattr(resp, "parsed", None) is not None:
+        parsed = resp.parsed
+        return parsed.model_dump() if hasattr(parsed, "model_dump") else parsed
+    text = (resp.text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").removeprefix("json").strip()
+    return json.loads(text)
 
 
 # ---------------------------------------------------------------- Decisions API
