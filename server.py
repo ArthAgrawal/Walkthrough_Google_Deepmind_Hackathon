@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 
 import config
 import pipeline
+from caseworker import launcher as caseworker
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("server")
@@ -57,7 +58,7 @@ def _start(video: Path, intro: str | None, video_only: bool, address: str | None
     job_id = uuid.uuid4().hex[:12]
     work_key = work_key or job_id
     JOBS[job_id] = {"status": "queued", "trace": [], "running": None, "partial": None, "report": None,
-                    "error": None, "parent": parent,
+                    "error": None, "parent": parent, "caseworker": None,
                     "inputs": {"video": str(video), "intro": intro, "video_only": video_only,
                                "address": address, "work_key": work_key, "reuse_frames": reuse_frames}}
 
@@ -70,10 +71,12 @@ def _start(video: Path, intro: str | None, video_only: bool, address: str | None
             job.update(trace=entries, running=running)
 
         def on_partial(rep: dict) -> None:
-            """Findings are ready: publish them before writing/verification finishes."""
+            """Findings are ready: publish them, and start the caseworker if we have an address."""
             rep["frame_base"] = f"/work/{work_key}/"
             rep.pop("work_dir", None)
             job["partial"] = rep
+            if address and not video_only and job.get("caseworker") is None:
+                _start_caseworker(job, address, rep)
 
         with _run_lock:
             job["status"] = "running"
@@ -83,6 +86,7 @@ def _start(video: Path, intro: str | None, video_only: bool, address: str | None
                                    on_partial=on_partial, reuse_frames=reuse_frames)
                 rep["frame_base"] = f"/work/{work_key}/"
                 rep.pop("work_dir", None)
+                rep["caseworker_job_id"] = job_id if job.get("caseworker") else None
                 job.update(status="done", report=rep, running=None, trace=rep["trace"])
             except Exception as exc:
                 log.error("job %s failed:\n%s", job_id, traceback.format_exc())
@@ -90,6 +94,18 @@ def _start(video: Path, intro: str | None, video_only: bool, address: str | None
 
     threading.Thread(target=work, daemon=True).start()
     return job_id
+
+
+def _start_caseworker(job: dict, address: str, report: dict) -> None:
+    """Run the Managed Agent caseworker in its own thread (slow; doesn't block the next analysis)."""
+    job["caseworker"] = {"status": "running"}
+
+    def work() -> None:
+        """Background thread body."""
+        borough = (report.get("household") or {}).get("borough")
+        job["caseworker"] = caseworker.run(address, borough, report)
+
+    threading.Thread(target=work, daemon=True).start()
 
 
 @app.post("/analyze")

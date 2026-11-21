@@ -341,11 +341,51 @@ async function follow(id) {
     } catch { await sleep(1000); continue; }
     if (!$("s-progress").classList.contains("hidden") || !shownPartial) renderProgress(j.trace || [], j.status === "queued" ? "ingest" : j.running, (j.partial || j.report || {}).video_only);
     if (j.status === "error") { clearInterval(tick); showError(j.error, id); return; }
-    if (j.status === "done") { clearInterval(tick); renderResults(j.report); return; }
+    if (j.status === "done") {
+      clearInterval(tick); renderResults(j.report); renderBuilding(j.caseworker, j.report);
+      if (j.caseworker && j.caseworker.status === "running") followCaseworker(id);
+      return;
+    }
     if (j.partial && !shownPartial) { shownPartial = true; renderResults(j.partial); }
+    if (shownPartial) renderBuilding(j.caseworker, j.partial);
     if (shownPartial) $("working").textContent = `Still working: ${stageText(j.running)}… (findings are final, the complaint is being written and checked)`;
     await sleep(700);
   }
+}
+async function followCaseworker(id) {
+  while (job === id) {
+    await sleep(2000);
+    try {
+      const j = await (await fetch(`/analyze/${id}`)).json();
+      renderBuilding(j.caseworker, j.report);
+      if (!j.caseworker || j.caseworker.status !== "running") return;
+    } catch { /* keep trying */ }
+  }
+}
+function renderBuilding(cw, r) {
+  $("sec-building").classList.toggle("hidden", !cw);
+  if (!cw) return;
+  if (cw.status === "running") {
+    $("building").innerHTML = `<div class="card"><span class="spinner"></span> <b>Caseworker agent is looking up this building's HPD history…</b>
+      <div class="meta" style="margin-top:8px"><span class="chip">Managed Agent</span><span>NYC Open Data · runs in the background</span></div></div>`;
+    return;
+  }
+  if (cw.status === "error") { $("building").innerHTML = `<div class="card section-empty">${esc(cw.summary)}</div>`; return; }
+  const names = {};
+  [...(r && r.findings || []), ...(r && r.reported || [])].forEach((f) => (names[f.id] = f.rule ? RULES[f.rule] : f.text));
+  const byClass = Object.entries(cw.open_by_class || {}).map(([k, v]) => `<span class="badge ${k === "C" ? "red" : k === "B" ? "amber" : ""}">class ${esc(k)}: ${v}</span>`).join("");
+  const already = (cw.findings || []).filter((f) => f.already_open);
+  $("building").innerHTML = `<div class="card item">
+    <h3>${esc(cw.matched_address || "")}: ${cw.open_violations} open HPD violation${cw.open_violations === 1 ? "" : "s"} <span class="muted small">(${cw.total_violations} on record)</span></h3>
+    <div class="badges">${byClass}</div>
+    <div>${esc(cw.summary || "")}</div>
+    ${(cw.recent_open || []).slice(0, 5).map((v) => `<div class="small">• <b>${esc(v.class)}</b> ${esc(v.inspectiondate)}${v.apartment ? " · apt " + esc(v.apartment) : ""}: ${esc(v.description)}</div>`).join("")}
+    ${already.length ? `<div><b>Already open for this building:</b> ${already.map((f) => esc(names[f.finding_id] || f.finding_id)).join(", ")}</div>`
+      : (cw.findings || []).length ? `<div class="muted">None of your findings match an open violation yet, so these would be new reports.</div>` : ""}
+    <div class="meta"><span class="chip">${cw.mode === "managed_agent" ? "Managed Agent (caseworker)" : "Direct Open Data lookup"}</span>
+      ${cw.ms ? `<span>${(cw.ms / 1000).toFixed(0)} s</span>` : ""}
+      <a href="https://data.cityofnewyork.us/d/wvxf-dwi5" target="_blank" rel="noopener">source: NYC Open Data ↗</a>
+      ${cw.fallback_reason ? `<span>${esc(cw.fallback_reason)}</span>` : ""}</div></div>`;
 }
 const stageText = (s) => (STAGES.find((x) => x[0] === s) || [0, "finishing"])[1].toLowerCase();
 

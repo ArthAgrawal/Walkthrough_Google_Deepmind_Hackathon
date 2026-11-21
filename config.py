@@ -9,7 +9,7 @@ HYDROGEN = "gemini-4-hydrogen"    # fast: transcription
 NEON     = "gemini-4-neon"        # understanding + writing: household facts, thermostat, complaint
 CARBON   = "gemini-4-carbon"      # hard cases only: uncertain findings, contradictions
 DECISION = "gemini-decision-1"    # Decisions API: every judgment call
-MANAGED_AGENT = "antigravity-preview-05-2026"   # VERIFY in Managed Agents docs (step 5)
+MANAGED_AGENT = "antigravity-preview-09-2026"   # verified: aistudio.google.com/docs/managed-agents-quickstart
 
 API_VERSION = "v1beta"            # Decisions API requires v1beta
 
