@@ -53,17 +53,19 @@ flowchart LR
 6. **Context** (`context.py`): local time (America/New_York) and outdoor temperature (Open-Meteo).
 7. **Rules** (`rules.py`): plain Python, no LLM. Each rule cites its official source.
 8. **Route** (`classify_route.py`): confidence ≥ 0.70 → keep; 0.35–0.70 → Carbon re-checks the frames around it (max 3 per clip) → keep / drop / "film again"; < 0.35 → drop.
-9. **Classify**: one Decisions call per kept finding: HPD category (choice over the 14 real HPD categories) + likely severity (3-level score), medium-resolution evidence frame.
+9. **Classify**: one Decisions call per kept finding: HPD category (choice over the 14 HPD order categories used in `data/hpd_reference.json`) + likely severity (3-level score), medium-resolution evidence frame.
 10. **Reported problems, checked as VIDEO** (`reported.py`): (R1) Neon finds every time the tenant talks about each
     problem and the object to look for ("flush" → toilet); one Decisions call over all frames finds where that object is on
-    screen. (R2) For each moment, ffmpeg cuts a 9 s clip (t−3 s to t+6 s, with sound) and the Decisions API watches it as a
+    screen. Clips are taken where the object is visible within ±10 s of a mention (the frame with the most motion, i.e. the
+    item being used); if it isn't near any mention, the whole video is searched and the best 1–2 stretches where it appears
+    are checked. "Not shown" is used only if the object never appears anywhere in the video. (R2) For each moment, ffmpeg cuts a 9 s clip (t−3 s to t+6 s, with sound) and the Decisions API watches it as a
     **video** block: supports / contradicts / not_shown, where "contradicts" requires the item to be clearly used AND working
     (flush pressed AND water flushes). (R3) Any "contradicts", or any answer under 0.75, goes to Carbon (MEDIUM), which
     watches the clip and has the final word. (R4) HPD verdict from `data/hpd_reference.json`. Video contradicts → bucket 2
     ("You said the toilet doesn't flush, but in your video it flushes normally"). Visual findings the tenant mentioned are
     merged into that report (never shown twice); water in a sink/tub/bowl is dropped by a "normal use?" Decisions check.
     `scripts/check_buckets.py` is the regression test (problem | source | video check | HPD verdict | bucket | decided by).
-11. **Write + verify** (`write_verify.py`): Neon writes the explanation (tenant's language) and the complaint as separate factual claims; the Decisions API checks every claim against its evidence frame and the tenant's words; unsupported claims are removed, and a finding with no surviving claim goes to "film again".
+11. **Write + verify** (`write_verify.py`): Neon writes plain-language card text and the complaint as separate first-person factual claims; the Decisions API checks every claim against its evidence frame and the tenant's words; unsupported claims are removed, and an item with no surviving claim goes to "Please confirm or film again". Then, from the **final** buckets only: the complaint lists every bucket 1 and 3 item (nothing from "Please confirm"), and a second Neon call writes the rights explanation in the tenant's language (buckets 1+3 = likely the landlord's job, bucket 2 = likely not covered, and "We weren't sure about N thing(s): please film again or confirm" when bucket 4 has items).
 12. **Verdicts + buckets** (`verdict.py`, `data/hpd_reference.json`): every report is sorted into
     "You reported it, and it's likely a violation" / "You reported it, but it's likely not a violation" /
     "We found it on your video, and it's likely a violation" (+ "Please confirm or film again"), most serious first.
@@ -84,9 +86,9 @@ flowchart LR
 | Model | Job |
 |---|---|
 | **Gemini 4 Hydrogen** (`gemini-4-hydrogen`) | Fast: transcribes the audio in its original language, with timestamps. |
-| **Gemini Decisions API** (`gemini-decision-1`) | Decides everything: frame quality, what's in each frame, category, likely severity, whether a reported problem is visible, and whether each complaint claim is supported. Calibrated 0–1 confidence on every answer. |
-| **Gemini 4 Neon** (`gemini-4-neon`) | Understands and writes: household facts from speech, thermostat reading, rights explanation in the tenant's language, complaint claims in English. |
-| **Gemini 4 Carbon** (`gemini-4-carbon`) | Only steps in when the system is unsure: re-checks the frames around a medium-confidence finding. |
+| **Gemini Decisions API** (`gemini-decision-1`) | Decides everything: frame quality, what's in each frame, where a reported object appears, what a video clip shows (supports / contradicts / not shown), whether water is normal use, which HPD reference entry fits, category, likely severity, whether the tenant mentioned a problem, and whether each complaint claim is supported. Calibrated 0–1 confidence on every answer. |
+| **Gemini 4 Neon** (`gemini-4-neon`) | Understands and writes: household facts from speech, when each problem is mentioned, thermostat reading, plain-language cards, rights explanation in the tenant's language, complaint claims in English. |
+| **Gemini 4 Carbon** (`gemini-4-carbon`) | Only steps in when the system is unsure: re-checks frames around a medium-confidence finding, and watches the clip when the Decisions API says a reported problem is contradicted or is under 0.75 confident (its answer is final). |
 | **Managed Agent** (`antigravity-preview-09-2026`) | Caseworker: runs our `hpd-lookup` skill in a Google-hosted sandbox against NYC Open Data, and marks which findings are already open violations for the building. |
 
 Thinking levels: Hydrogen and Neon LOW (Neon took 13 s for a one-word reply at its default; 2.5 s at LOW).
@@ -96,13 +98,16 @@ Carbon MEDIUM: on the same re-check, HIGH took 265 s, MEDIUM 17 s, LOW 4.5 s, al
 
 ## Decisions API usage
 
-- `client.decisions.create(model="gemini-decision-1", input=[text, image...], questions={...})` on `v1beta`.
+- `client.decisions.create(model="gemini-decision-1", input=[text, image or video...], questions={...})` on `v1beta`.
 - **All of a frame's questions in ONE call** (18 yes/no questions with true/false criteria).
-- Question types used: `noul` (yes/no), `choice` (14 HPD categories; best frame among A–D), `score` (3-level likely severity).
-- Resolution `low` for frame scans, `medium` for evidence frames (classification, reported problems, claim checks).
-- Confidence drives routing (keep / Carbon / drop) and the claim filter (P(supported) < 0.5 → removed).
-- A typical 70 s clip: ~44 Decisions calls / ~730 questions, 1 Hydrogen, 2 Neon, 0–3 Carbon, about 45 s end to end;
-  results appear as soon as findings are ready, the complaint finishes after.
+- **Video input:** 9 s clips (with sound) are sent as `{"type": "video", "data": <base64>, "mime_type": "video/mp4"}` blocks.
+- Question types used: `noul` (yes/no), `choice` (HPD categories; HPD reference entry; supports/contradicts/not_shown),
+  `score` (3-level likely severity).
+- Resolution `low` for frame scans, `medium` for evidence frames and clips.
+- Confidence drives routing (keep / Carbon / drop), Carbon adjudication of clips (< 0.75), and the claim filter
+  (P(supported) < 0.5 → removed).
+- Measured on 4 test videos (18–70 s): 21–55 Decisions calls / 345–910 questions, 1 Hydrogen, 4–5 Neon, 0–2 Carbon,
+  about 45–100 s end to end; results appear as soon as findings are ready, the complaint finishes after.
 
 Every call is logged (model, step, purpose, questions, ms, key output, media stripped) and shown in the app
 under **How this report was made**, with a per-model summary and a downloadable log.
@@ -133,7 +138,16 @@ confidence are right 98% of the time; the misses are inputs that are genuinely a
 routes on (keep / Carbon re-check / drop). Likely severity is our weak spot (it under-calls HPD class C); it is
 logged as an open item in [`eval/FAILURES.md`](eval/FAILURES.md) and was not tuned on the test set.
 
+Note: this eval was run before the app switched to the HPD order categories in `data/hpd_reference.json`; it scored the
+14 complaint categories of `ygpa-z7cr`. Re-scoring with the order categories (joining each violation's `ordernumber` to
+`data/hpd_orders_all.json`) is not done yet.
+
 ![accuracy](eval/charts/category_accuracy.png) ![calibration](eval/charts/calibration.png)
+
+**Bucket regression test** (`scripts/check_buckets.py`, 4 real videos, all expectations met): "flush doesn't work" but the
+video shows it flushing → bucket 2 (Decisions API → Carbon: "water rushes into the toilet bowl and flushes normally");
+"no hot water" (not shown) → 1; toilet shown but never flushed → 1; water in a sink → not a leak; washer leaking → 1;
+jammed window → 1; loud/slow dishwasher → 2; stove burner → 4 ("please confirm").
 
 **On video:** `eval/eval_clips.py` (full pipeline vs video-only vs one-call Neon baseline, match = same rule within ±3 s)
 is ready but not yet run: we don't have a labelled clip set yet. What we have shown on real footage
@@ -147,7 +161,9 @@ claim check now demotes unverified findings; severity under-calls class C (open)
 
 ## Limitations (said plainly)
 
-- Checks **6 common conditions** (window guards, heat day/night, smoke/CO detectors, leaks, mold, peeling paint), not all housing law.
+- On video, it looks for **6 common conditions** (window guards, heat day/night, smoke/CO detectors, leaks, mold, peeling paint).
+  Problems the tenant reports are judged against the 26 conditions in `data/hpd_reference.json`. Not all housing law.
+- A video can only show what was filmed: water temperature, noise, or a problem that only happens sometimes may be "not shown".
 - **Not legal advice.** We output a *likely* severity, never the official HPD class (HPD assigns that on inspection).
 - **No health claims.** For mold we say "condition observed".
 - **The tenant files**, never the app: the complaint is a draft to review and submit through 311.
