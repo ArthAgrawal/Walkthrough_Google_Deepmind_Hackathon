@@ -45,6 +45,8 @@ Write:
    - for each item in "findings": what was seen, at what time in the video, and which NYC rule it relates to;
    - for each item in "not_violations": what was seen and why it is NOT a violation;
    - for each item in "refilm": what to film again or confirm;
+   - for each item in "reported" (problems the tenant mentioned): whether it is visible in the video;
+     if not visible, suggest describing it in the complaint (e.g. noises, appliances that don't work);
    - how to file: call 311 or use portal.311.nyc.gov; HPD inspects and decides. This is not legal advice.
 2. complaint_intro, in English: 1-2 sentences from the tenant to NYC HPD requesting an inspection.
    Use "[ADDRESS, APT]" as a placeholder for the address. No claims about specific conditions here.
@@ -66,13 +68,15 @@ def _slim(f: dict) -> dict:
     return d
 
 
-def write(routed: dict, household: dict | None, context: dict) -> dict:
+def write(routed: dict, household: dict | None, context: dict, reported_items: list[dict] | None = None) -> dict:
     """NEON call: returns Writing dict (rights_explanation, complaint_intro, claims)."""
     lang = (household or {}).get("language") or "en"
     data = {"household": household, "context": context,
             "findings": [_slim(f) for f in routed["findings"]],
             "not_violations": [_slim(f) for f in routed["not_violations"]],
-            "refilm": [_slim(f) for f in routed["refilm"]]}
+            "refilm": [_slim(f) for f in routed["refilm"]],
+            "reported": [{"problem": x["text"], "visible_in_video": x["visible"],
+                          "time_s": x.get("t_start")} for x in (reported_items or [])]}
     resp = models.neon(
         PROMPT.format(lang=lang, lang_name=LANG_NAMES.get(lang, lang),
                       data=json.dumps(data, ensure_ascii=False, indent=1)),
@@ -125,11 +129,15 @@ def verify(claims: list[dict], findings: list[dict], context: dict, transcript: 
 
 
 def assemble_complaint(intro: str, verified: list[dict], routed: dict, household: dict | None,
-                       context: dict) -> str:
-    """Build the English complaint draft from verified claims + not-violation explanations."""
-    borough = (household or {}).get("borough") or "[BOROUGH]"
+                       context: dict, reported_items: list[dict] | None = None, address: str | None = None) -> str:
+    """Build the English complaint draft from verified claims, tenant reports and not-violation explanations."""
+    addr = (address or "").strip() or "[ADDRESS, APT]"
+    boroughs = ("Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island")
+    in_addr = next((b for b in boroughs if b.lower() in addr.lower()), None)
+    borough = (household or {}).get("borough") or in_addr or "[BOROUGH]"
+    where = addr if in_addr else f"{addr}, {borough}"
     lines = ["To: NYC Department of Housing Preservation and Development (via 311)",
-             f"Re: Housing maintenance complaint, [ADDRESS, APT], {borough}", "", intro.strip(), ""]
+             f"Re: Housing maintenance complaint, {where}", "", intro.strip().replace("[ADDRESS, APT]", addr), ""]
     kept = [c for c in verified if c["kept"]]
     if routed["findings"]:
         lines.append(f"Conditions recorded on video ({context.get('date')} at {context.get('local_time')}):")
@@ -141,10 +149,16 @@ def assemble_complaint(intro: str, verified: list[dict], routed: dict, household
             lines.append(f"- {RULE_LABELS[f['rule']].capitalize()}{sev}, video {f['t_start']:.0f}-{f['t_end']:.0f}s: "
                          + " ".join(fc))
     else:
-        lines.append("No violations were identified in this video.")
+        lines.append("No violations of the checked rules were identified in this video.")
+    if reported_items:
+        lines += ["", "Also reported by the tenant:"]
+        for x in reported_items:
+            where = (f"visible in the video at {x['t_start']:.0f}s" if x.get("visible")
+                     else "tenant report; not visible in the video")
+            lines.append(f"- {x['text'][:1].upper() + x['text'][1:]} ({where}).")
     if routed["not_violations"]:
         lines += ["", "Items checked that are not violations, and why:"]
         lines += [f"- {RULE_LABELS[f['rule']].capitalize()}: {f['explanation']}" for f in routed["not_violations"]]
     lines += ["", "Video evidence with timestamps is available on request. I request an inspection.", "",
               "Drafted with Walkthrough from the tenant's video; reviewed and filed by the tenant. Not legal advice."]
-    return "\n".join(lines)
+    return chr(10).join(lines)

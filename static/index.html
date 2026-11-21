@@ -6,184 +6,249 @@
 <title>Walkthrough</title>
 <style>
   :root {
-    --bg: #f6f5f2; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e3e1dc;
-    --accent: #1f5fbf; --bad: #b3261e; --bad-bg: #fbeceb; --ok: #2e7d32; --ok-bg: #edf6ee;
-    --warn: #8a5a00; --warn-bg: #fdf4e3;
+    --bg: #f4f3ef; --card: #ffffff; --ink: #1b1b19; --muted: #67655f; --line: #e2dfd8;
+    --accent: #2453c7; --accent-ink: #ffffff; --accent-soft: #e8eefc;
+    --red: #b3261e; --red-bg: #fbe9e7; --green: #2e6b30; --green-bg: #e9f4ea;
+    --amber: #865400; --amber-bg: #fdf1dc; --gray-bg: #efeee9;
+    --radius: 16px;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #161615; --card: #1f1f1d; --ink: #ecebe7; --muted: #a09e98; --line: #33322f;
-      --accent: #7aa7ff; --bad: #ff8a80; --bad-bg: #3a1f1d; --ok: #81c784; --ok-bg: #1d2e1e;
-      --warn: #ffcc80; --warn-bg: #33291a; }
+    :root { --bg: #141413; --card: #1e1e1c; --ink: #efeee9; --muted: #a3a19a; --line: #34332f;
+      --accent: #7ea2ff; --accent-ink: #0c1530; --accent-soft: #1d2741;
+      --red: #ff8f86; --red-bg: #3b1d1a; --green: #8fd192; --green-bg: #1b2e1c;
+      --amber: #ffc870; --amber-bg: #34291a; --gray-bg: #2a2a27; }
   }
   * { box-sizing: border-box; }
+  html { font-size: 18px; }
   body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
-  h1 { font-size: 1.5rem; margin: 0 0 2px; }
-  h2 { font-size: 1.1rem; margin: 28px 0 10px; }
-  .tag { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 28px 16px 80px; }
+  header h1 { font-size: 2.2rem; margin: 0; letter-spacing: -.02em; }
+  header p { margin: 2px 0 24px; color: var(--muted); font-size: 1.15rem; }
+  h2 { font-size: 1.35rem; margin: 34px 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
   .hidden { display: none !important; }
   button, .btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    padding: 10px 16px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; }
-  button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button:disabled { opacity: .5; cursor: default; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  video { width: 100%; max-height: 60vh; background: #000; border-radius: 10px; }
-  .prompt { font-weight: 600; margin: 0 0 12px; }
-  .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--bad);
-    margin-right: 6px; animation: blink 1s infinite; }
-  @keyframes blink { 50% { opacity: .2; } }
-  details summary { cursor: pointer; color: var(--muted); }
-  textarea, input[type=text] { width: 100%; font: inherit; padding: 10px; border-radius: 8px;
+    padding: 12px 20px; border-radius: 12px; cursor: pointer; text-decoration: none; display: inline-flex;
+    align-items: center; gap: 8px; }
+  button:hover, .btn:hover { border-color: var(--accent); }
+  .primary { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-ink) !important; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+
+  /* Screen 1 */
+  .stage-video { position: relative; aspect-ratio: 16 / 9; background: #0c0c0b; border-radius: var(--radius); overflow: hidden;
+    display: flex; align-items: center; justify-content: center; }
+  .stage-video video { width: 100%; height: 100%; object-fit: contain; }
+  .stage-video .placeholder { color: #bdbab2; text-align: center; padding: 20px; }
+  .rec-badge { position: absolute; top: 14px; left: 14px; background: rgba(0,0,0,.6); color: #fff; padding: 4px 12px;
+    border-radius: 99px; font-size: .9rem; }
+  .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; margin-right: 6px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .hint { font-size: 1.2rem; font-weight: 600; margin: 0 0 16px; }
+  label.check { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+  label.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+  input[type=text], textarea { width: 100%; font: inherit; padding: 12px; border-radius: 12px;
     border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
-  textarea.complaint { min-height: 320px; font: 14px/1.45 ui-monospace, Consolas, monospace; }
-  .stage { padding: 6px 0; color: var(--muted); }
-  .stage.done { color: var(--ink); }
-  .stage.run { color: var(--accent); font-weight: 600; }
-  .stage .ms { color: var(--muted); font-weight: 400; font-size: .85em; }
-  .finding { display: grid; grid-template-columns: 180px 1fr; gap: 14px; }
-  @media (max-width: 560px) { .finding { grid-template-columns: 1fr; } }
-  .finding img { width: 100%; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; }
-  .finding h3 { margin: 0 0 4px; font-size: 1rem; }
-  .meta { font-size: .85rem; color: var(--muted); }
-  .pill { display: inline-block; font-size: .8rem; padding: 2px 8px; border-radius: 99px; margin-right: 4px; }
-  .pill.bad { background: var(--bad-bg); color: var(--bad); }
-  .pill.ok { background: var(--ok-bg); color: var(--ok); }
-  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .field { margin-top: 14px; }
+  .field label { display: block; color: var(--muted); font-size: .9rem; margin-bottom: 4px; }
+
+  /* Screen 2 */
+  .progress-row { display: grid; grid-template-columns: 28px 1fr auto auto; gap: 12px; align-items: center;
+    padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); }
+  .progress-row:first-child { border-top: 0; }
+  .progress-row.done, .progress-row.run { color: var(--ink); }
+  .progress-row.run .label { font-weight: 700; }
+  .progress-row .icon { text-align: center; }
+  .spinner { width: 18px; height: 18px; border: 3px solid var(--accent-soft); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .secs { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 56px; text-align: right; }
+  .chip { font-size: .78rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .chip.plain { background: var(--gray-bg); color: var(--muted); }
+
+  /* Screen 3 */
+  .banner { background: var(--amber-bg); color: var(--amber); border-radius: var(--radius); padding: 14px 18px; font-weight: 600; margin-bottom: 8px; }
+  .working { background: var(--accent-soft); color: var(--accent); border-radius: var(--radius); padding: 12px 18px; font-weight: 600; }
+  .facts { display: grid; grid-template-columns: minmax(140px, auto) 1fr; gap: 6px 18px; margin: 0; }
+  .facts dt { color: var(--muted); } .facts dd { margin: 0; }
   .quote { font-style: italic; color: var(--muted); }
-  .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
-  .facts dt { color: var(--muted); }
-  .facts dd { margin: 0; }
-  .explain { white-space: pre-wrap; }
-  .trace { font-size: .8rem; color: var(--muted); margin-top: 28px; }
-  .log-summary { color: var(--ink); font-weight: 600; margin: 10px 0; }
-  .call { padding: 6px 0; border-top: 1px solid var(--line); }
-  .call .what { color: var(--ink); }
-  .call .out { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
-  .call.fail .what { color: var(--bad); }
-  .check { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; cursor: pointer; }
-  .banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px;
-    font-weight: 600; margin-top: 16px; }
-  .err { color: var(--bad); }
+  .item { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .item h3 { margin: 0; font-size: 1.15rem; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { font-size: .8rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: var(--gray-bg); color: var(--muted); }
+  .badge.red { background: var(--red-bg); color: var(--red); }
+  .badge.green { background: var(--green-bg); color: var(--green); }
+  .badge.amber { background: var(--amber-bg); color: var(--amber); }
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thumbs img { height: 120px; width: auto; max-width: 100%; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; object-fit: cover; }
+  .meta { font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
   a { color: var(--accent); }
-  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center;
-    justify-content: center; padding: 16px; z-index: 10; }
-  .lightbox img { max-width: 100%; max-height: 100%; }
+  .section-empty { color: var(--muted); }
+  .explain { white-space: pre-wrap; font-size: 1.05rem; }
+  textarea.complaint { min-height: 340px; font: .85rem/1.5 ui-monospace, Consolas, monospace; }
+  details.how summary { cursor: pointer; font-weight: 600; }
+  .log-summary { font-weight: 700; margin: 12px 0; }
+  .call { padding: 8px 0; border-top: 1px solid var(--line); font-size: .82rem; }
+  .call .what { font-size: .92rem; }
+  .call .out { font-family: ui-monospace, Consolas, monospace; color: var(--muted); overflow-wrap: anywhere; }
+  .call.fail .what { color: var(--red); }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } .facts { grid-template-columns: 1fr; } }
+  .compare h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  .cmp-row { padding: 8px 10px; border-radius: 10px; margin-bottom: 6px; background: var(--bg); }
+  .cmp-row.diff { outline: 2px solid var(--accent); background: var(--accent-soft); }
+  .big-line { font-size: 1.2rem; font-weight: 700; margin: 4px 0 14px; }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; cursor: zoom-out; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; }
+  .err-card { border-color: var(--red); }
+  .err-card h3 { margin: 0 0 6px; color: var(--red); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Walkthrough</h1>
-  <p class="tag">Landlords have lawyers. Tenants have a phone.</p>
+  <header>
+    <h1>Walkthrough</h1>
+    <p>Landlords have lawyers. Tenants have a phone.</p>
+  </header>
 
-  <!-- Screen 1: record / upload -->
+  <!-- ============ Screen 1: record / upload ============ -->
   <section id="s-record">
-    <div class="card">
-      <p class="prompt">Start by saying who lives here and how many apartments are in your building, then show us the problems.</p>
+    <p class="hint">Start by saying who lives here and how many apartments are in your building, then show us the problems.</p>
+    <div class="stage-video">
       <video id="preview" playsinline muted class="hidden"></video>
       <video id="playback" playsinline controls class="hidden"></video>
-      <div class="row" style="margin-top:12px">
-        <button id="b-camera" class="primary">Open camera</button>
-        <button id="b-rec" class="primary hidden">Record</button>
-        <button id="b-stop" class="hidden"><span class="rec-dot"></span>Stop</button>
-        <label class="btn">Upload video<input id="f-upload" type="file" accept="video/*" hidden></label>
-      </div>
-      <p id="rec-status" class="meta"></p>
+      <div id="placeholder" class="placeholder">Open the camera to record, or upload a video.</div>
+      <div id="rec-badge" class="rec-badge hidden"><span class="rec-dot"></span><span id="rec-time">0:00</span></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button id="b-camera" class="primary">Open camera</button>
+      <button id="b-rec" class="primary hidden">● Record</button>
+      <button id="b-stop" class="hidden">■ Stop</button>
+      <label class="btn">Upload video<input id="f-upload" type="file" accept="video/*" hidden></label>
+      <span id="rec-status" class="muted small"></span>
+    </div>
+    <div class="card" style="margin-top:16px">
       <label class="check"><input id="video-only" type="checkbox"> Ignore audio (video-only)</label>
-      <details style="margin-top:8px">
-        <summary>Type the intro instead (optional)</summary>
-        <input id="intro" type="text" placeholder="e.g. My son is 6. There are 20 apartments in my building." style="margin-top:8px">
+      <div class="field">
+        <label for="address">Address (optional, used for the complaint and building history)</label>
+        <input id="address" type="text" placeholder="e.g. 220 W 26th St, Apt 4B, Manhattan" autocomplete="street-address">
+      </div>
+      <details class="field"><summary class="muted small">Type the intro instead of saying it (optional)</summary>
+        <input id="intro" type="text" style="margin-top:8px" placeholder="e.g. My son is 6. There are 20 apartments in my building.">
       </details>
-      <div class="row" style="margin-top:14px">
-        <button id="b-analyze" class="primary" disabled>Analyze</button>
+      <div class="row" style="margin-top:18px">
+        <button id="b-analyze" class="primary" disabled>Analyze video</button>
       </div>
     </div>
-    <p class="meta">Checks 6 common conditions, not all housing law. Not legal advice. Nothing is filed automatically.</p>
+    <p class="muted small">Checks 6 common conditions, not all housing law. Not legal advice. No health claims. Nothing is filed automatically: you review and file.</p>
   </section>
 
-  <!-- Screen 2: analyzing -->
-  <section id="s-analyzing" class="hidden">
-    <h2>Analyzing your video</h2>
-    <div class="card" id="stages"></div>
-    <p id="an-error" class="err"></p>
-    <button id="b-restart-err" class="hidden">Start over</button>
+  <!-- ============ Screen 2: progress ============ -->
+  <section id="s-progress" class="hidden">
+    <h2 id="progress-title">Analyzing your walkthrough <span id="total-secs" class="muted"></span></h2>
+    <div class="card" id="progress"></div>
+    <div id="progress-error"></div>
   </section>
 
-  <!-- Screen 3: results -->
+  <!-- ============ Screen 3: results ============ -->
   <section id="s-results" class="hidden">
     <div id="banner" class="banner hidden"></div>
+    <div id="working" class="working hidden"></div>
+
     <h2>What we heard</h2>
     <div class="card"><dl class="facts" id="facts"></dl></div>
 
-    <h2 id="h-findings">Problems that likely break NYC housing rules</h2>
-    <div id="findings"></div>
-
-    <h2 id="h-not">Not a violation, and why</h2>
-    <div id="not"></div>
-
-    <h2 id="h-refilm">Film again or confirm</h2>
-    <div id="refilm"></div>
+    <h2>🔴 Violations</h2>
+    <div id="list-findings"></div>
+    <div id="sec-reported"><h2>🗣 Reported by you</h2><div id="list-reported"></div></div>
+    <div id="sec-not"><h2>✅ Not a violation, and why</h2><div id="list-not"></div></div>
+    <div id="sec-refilm"><h2>⚠ Please confirm or film again</h2><div id="list-refilm"></div></div>
+    <div id="sec-building" class="hidden"><h2>🏢 Building history</h2><div id="building"></div></div>
 
     <h2>Your rights, explained</h2>
     <div class="card explain" id="rights" dir="auto"></div>
 
     <h2>Complaint draft (English)</h2>
     <div class="card">
-      <textarea id="complaint" class="complaint"></textarea>
-      <div class="row" style="margin-top:10px">
+      <textarea id="complaint" class="complaint" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:12px">
         <button id="b-copy" class="primary">Copy</button>
-        <button id="b-download">Download .txt</button>
+        <button id="b-download">Download</button>
         <a class="btn" href="https://portal.311.nyc.gov/" target="_blank" rel="noopener">Review, then file through 311 ↗</a>
       </div>
-      <p class="meta">Fill in your address, review every line, then file it yourself. Walkthrough never files for you.</p>
+      <p class="muted small">Fill in anything in [brackets], review every line, then file it yourself. Walkthrough never files for you.</p>
     </div>
 
-    <details class="trace card" id="howmade">
+    <div id="sec-compare">
+      <h2>Same video, different words?</h2>
+      <div class="card">
+        <p class="muted" style="margin-top:0">Re-run this exact video ignoring everything you said, to see what the spoken facts changed.</p>
+        <button id="b-compare">Run again without audio</button>
+        <span id="compare-status" class="muted small"></span>
+        <div id="compare" class="hidden" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <details class="card how" id="howmade" style="margin-top:34px">
       <summary>How this report was made</summary>
       <p id="log-summary" class="log-summary"></p>
       <div id="log-calls"></div>
-      <p id="log-extra"></p>
-      <a id="b-log" class="btn" download>Download log</a>
+      <p id="log-extra" class="muted small"></p>
+      <a id="b-log" class="btn" download="walkthrough-model-log.json">Download log</a>
     </details>
-    <button id="b-restart">Analyze another video</button>
+
+    <div class="row" style="margin-top:20px"><button id="b-new" class="primary">New walkthrough</button></div>
   </section>
 </main>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const show = (id) => ["s-record", "s-analyzing", "s-results"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+const show = (id) => ["s-record", "s-progress", "s-results"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const RULES = {
   WINDOW_GUARD: "Window without a window guard", HEAT_DAY: "Not enough heat (daytime)",
   HEAT_NIGHT: "Not enough heat (night)", SMOKE_CO: "Smoke / CO detector not seen",
   LEAK: "Water leak or water damage", MOLD: "Mold condition", PEELING_PAINT: "Peeling paint",
 };
-const STAGES = {
-  ingest: "Extracting frames and audio", transcribe: "Hydrogen: transcribing what you said",
-  household: "Neon: understanding who lives here", frame_checks: "Decisions API: checking every frame",
-  thermostat: "Neon: reading the thermostat", context: "Local time and outdoor temperature",
-  rules: "Applying NYC rules", route: "Routing by confidence (Carbon re-checks unsure ones)",
-  classify: "Decisions API: category and likely severity", write: "Neon: writing your explanation and complaint",
-  verify: "Decisions API: checking every claim against the evidence",
-};
+const STAGES = [
+  ["ingest", "Extracting frames and audio", null],
+  ["transcribe", "Transcribing what you said", "Hydrogen"],
+  ["household", "Understanding who lives here", "Neon"],
+  ["frame_checks", "Checking every frame (18 yes/no questions each)", "Decisions"],
+  ["thermostat", "Reading the thermostat", "Neon"],
+  ["context", "Local time and outdoor temperature", null],
+  ["rules", "Applying NYC housing rules", null],
+  ["route", "Re-checking uncertain findings", "Carbon"],
+  ["classify", "Category and likely severity", "Decisions"],
+  ["reported", "Checking the problems you mentioned", "Decisions"],
+  ["write", "Writing your explanation and complaint", "Neon"],
+  ["verify", "Checking every claim against the evidence", "Decisions"],
+];
+const DECIDED = { decisions: "Decisions API", carbon: "Carbon re-check", "neon+rules": "Neon + rules" };
 
-let blob = null, blobName = null, stream = null, recorder = null;
+// ---------------- state
+let blob = null, blobName = null, stream = null, recorder = null, recTimer = null;
+let job = null, jobStart = 0, stageStart = {}, lastRunning = null, tick = null;
+let current = null;          // latest report (partial or final)
+let compareJob = null;
 
-// ---------- Screen 1: record / upload
+// ---------------- Screen 1
 $("b-camera").onclick = async () => {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 }, audio: true });
   } catch (e) {
     $("rec-status").textContent = "Camera unavailable (" + e.name + "). You can upload a video instead.";
     return;
   }
   $("preview").srcObject = stream; $("preview").classList.remove("hidden"); $("preview").play();
-  $("playback").classList.add("hidden");
+  $("playback").classList.add("hidden"); $("placeholder").classList.add("hidden");
   $("b-camera").classList.add("hidden"); $("b-rec").classList.remove("hidden");
 };
-
 $("b-rec").onclick = () => {
   const types = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
   const mimeType = types.find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
@@ -191,182 +256,300 @@ $("b-rec").onclick = () => {
   const chunks = [];
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   recorder.onstop = () => {
+    clearInterval(recTimer); $("rec-badge").classList.add("hidden");
     const type = recorder.mimeType || "video/webm";
     setClip(new Blob(chunks, { type }), type.includes("mp4") ? "recording.mp4" : "recording.webm");
     stream.getTracks().forEach((t) => t.stop());
     $("preview").classList.add("hidden");
-    $("b-stop").classList.add("hidden"); $("b-camera").classList.remove("hidden");
-    $("b-camera").textContent = "Record again";
+    $("b-stop").classList.add("hidden"); $("b-camera").classList.remove("hidden"); $("b-camera").textContent = "Record again";
   };
   recorder.start(1000);
+  const t0 = Date.now();
+  $("rec-badge").classList.remove("hidden");
+  recTimer = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $("rec-time").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }, 250);
   $("b-rec").classList.add("hidden"); $("b-stop").classList.remove("hidden");
-  $("rec-status").textContent = "Recording… say who lives here first.";
+  $("rec-status").textContent = "Say who lives here first, then film the problems.";
 };
 $("b-stop").onclick = () => recorder && recorder.stop();
-
 $("f-upload").onchange = (e) => { const f = e.target.files[0]; if (f) setClip(f, f.name); };
-
 function setClip(b, name) {
   blob = b; blobName = name;
-  $("playback").src = URL.createObjectURL(b); $("playback").classList.remove("hidden");
+  $("playback").src = URL.createObjectURL(b); $("playback").classList.remove("hidden"); $("placeholder").classList.add("hidden");
   $("rec-status").textContent = `Ready: ${name} (${(b.size / 1e6).toFixed(1)} MB)`;
   $("b-analyze").disabled = false;
 }
-
 $("b-analyze").onclick = async () => {
   if (!blob) return;
   const fd = new FormData();
   fd.append("video", blob, blobName);
-  const intro = $("intro").value.trim();
   if ($("video-only").checked) fd.append("video_only", "true");
-  else if (intro) fd.append("intro", intro);
-  show("s-analyzing"); renderStages([], "upload"); $("an-error").textContent = "";
+  else if ($("intro").value.trim()) fd.append("intro", $("intro").value.trim());
+  if ($("address").value.trim()) fd.append("address", $("address").value.trim());
+  startProgress();
   try {
     const r = await fetch("/analyze", { method: "POST", body: fd });
-    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
-    const id = (await r.json()).job_id;
-    history.replaceState(null, "", `?job=${id}`);   // reload-safe
-    poll(id);
-  } catch (e) { fail(e.message); }
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "Upload failed.");
+    follow(j.job_id);
+  } catch (e) { showError(e.message || "Upload failed. Check your connection and retry.", null); }
 };
 
-// ---------- Screen 2: analyzing
-function renderStages(trace, running) {
-  const lines = trace.map((t) => {
-    let label = STAGES[t.step] || t.step;
-    if (t.step === "frame_checks") label = `Decisions API: ${t.calls} frames × 18 checks`;
-    if (t.step === "route") label = t.calls ? `Carbon: re-checked ${t.calls} uncertain finding${t.calls > 1 ? "s" : ""}` : "Routing by confidence (no re-checks needed)";
-    if (t.step === "classify") label = `Decisions API: category + severity for ${t.calls} finding${t.calls === 1 ? "" : "s"}`;
-    if (t.step === "thermostat" && !t.calls) label = "No thermostat in view";
-    return `<div class="stage done">✓ ${esc(label)} <span class="ms">${(t.ms / 1000).toFixed(1)} s</span></div>`;
-  });
-  if (running) lines.push(`<div class="stage run">… ${esc(running === "upload" ? "Uploading video" : STAGES[running] || running)}</div>`);
-  $("stages").innerHTML = lines.join("");
+// ---------------- Screen 2: progress
+function startProgress() {
+  show("s-progress"); $("progress-error").innerHTML = ""; current = null;
+  jobStart = Date.now(); stageStart = {}; lastRunning = null;
+  renderProgress([], "ingest", false);
+  clearInterval(tick); tick = setInterval(() => renderProgress(window._trace || [], lastRunning, window._vo), 250);
+}
+function renderProgress(trace, running, videoOnly) {
+  window._trace = trace; window._vo = videoOnly;
+  if (running && !stageStart[running]) stageStart[running] = Date.now();
+  lastRunning = running;
+  const done = Object.fromEntries(trace.map((t) => [t.step, t]));
+  $("total-secs").textContent = `· ${((Date.now() - jobStart) / 1000).toFixed(0)} s`;
+  $("progress").innerHTML = STAGES.map(([step, label, chip]) => {
+    const t = done[step];
+    let cls = "", icon = "", secs = "", note = "";
+    if (t) {
+      cls = "done"; icon = "✓"; secs = `${(t.ms / 1000).toFixed(1)} s`;
+      if (t.reused) note = " · reused from first run";
+      else if (step === "frame_checks") note = ` · ${t.calls} frames`;
+      else if (chip && !t.calls) note = step === "route" ? " · nothing uncertain" : " · not needed";
+      else if (step === "route" || step === "classify" || step === "reported" || step === "verify") note = ` · ${t.calls} call${t.calls === 1 ? "" : "s"}`;
+    } else if (step === running) {
+      cls = "run"; icon = '<span class="spinner"></span>';
+      secs = `${((Date.now() - (stageStart[step] || Date.now())) / 1000).toFixed(1)} s`;
+    } else if (videoOnly && ["transcribe", "household", "reported"].includes(step)) {
+      icon = "–"; note = " · skipped (video-only)";
+    }
+    return `<div class="progress-row ${cls}"><span class="icon">${icon}</span>
+      <span class="label">${esc(label)}<span class="muted small">${esc(note)}</span></span>
+      ${chip ? `<span class="chip">${chip}</span>` : '<span class="chip plain">local</span>'}
+      <span class="secs">${secs}</span></div>`;
+  }).join("");
 }
 
-async function poll(id) {
-  try {
-    const j = await (await fetch(`/analyze/${id}`)).json();
-    renderStages(j.trace || [], j.status === "queued" ? "upload" : j.running);
-    if (j.status === "done") return renderResults(j.report);
-    if (j.status === "error") return fail(j.error);
-  } catch (e) { /* transient; keep polling */ }
-  setTimeout(() => poll(id), 700);
+async function follow(id) {
+  job = id; history.replaceState(null, "", `?job=${id}${location.hash}`);
+  let shownPartial = false;
+  while (job === id) {
+    let j;
+    try {
+      const r = await fetch(`/analyze/${id}`);
+      j = await r.json();
+      if (!r.ok) { showError(j.detail || "This job was not found.", null); return; }
+    } catch { await sleep(1000); continue; }
+    if (!$("s-progress").classList.contains("hidden") || !shownPartial) renderProgress(j.trace || [], j.status === "queued" ? "ingest" : j.running, (j.partial || j.report || {}).video_only);
+    if (j.status === "error") { clearInterval(tick); showError(j.error, id); return; }
+    if (j.status === "done") { clearInterval(tick); renderResults(j.report); return; }
+    if (j.partial && !shownPartial) { shownPartial = true; renderResults(j.partial); }
+    if (shownPartial) $("working").textContent = `Still working: ${stageText(j.running)}… (findings are final, the complaint is being written and checked)`;
+    await sleep(700);
+  }
 }
-function fail(msg) { $("an-error").textContent = "Something went wrong: " + msg; $("b-restart-err").classList.remove("hidden"); }
+const stageText = (s) => (STAGES.find((x) => x[0] === s) || [0, "finishing"])[1].toLowerCase();
 
-// ---------- Screen 3: results
-const fmtT = (f) => f.t_start === f.t_end ? `${f.t_start.toFixed(0)} s` : `${f.t_start.toFixed(0)}–${f.t_end.toFixed(0)} s`;
+function showError(msg, failedJob) {
+  clearInterval(tick); show("s-progress");
+  $("progress-error").innerHTML = `<div class="card err-card"><h3>We couldn't finish this analysis</h3>
+    <p>${esc(msg)}</p><div class="row">
+    ${failedJob || blob ? '<button id="b-retry" class="primary">Retry</button>' : ""}
+    <button id="b-err-new">New walkthrough</button></div></div>`;
+  if ($("b-retry")) $("b-retry").onclick = async () => {
+    if (failedJob) {
+      startProgress();
+      try { const r = await fetch(`/analyze/${failedJob}/retry`, { method: "POST" }); const j = await r.json(); if (!r.ok) throw new Error(j.detail); follow(j.job_id); }
+      catch (e) { showError(e.message || "Retry failed.", null); }
+    } else $("b-analyze").onclick();
+  };
+  $("b-err-new").onclick = newWalkthrough;
+}
 
+// ---------------- Screen 3: results
+const fmtT = (a, b) => a == null ? "" : (b == null || a === b) ? `${a.toFixed(0)} s` : `${a.toFixed(0)}–${b.toFixed(0)} s`;
+const sevClass = (s) => s === "immediately hazardous" ? "red" : s === "hazardous" ? "amber" : "";
+
+function thumbs(base, frames, label) {
+  return (frames || []).length ? `<div class="thumbs">${frames.map((p, i) =>
+    `<img src="${esc(base + p)}" alt="${esc(label)} evidence frame ${i + 1}" loading="lazy" data-zoom>`).join("")}</div>` : "";
+}
 function card(f, base, kind) {
-  const pills = [];
+  const badges = [];
   if (kind === "finding") {
-    pills.push(`<span class="pill bad">${esc(f.likely_severity || "violation")}</span>`);
-    if (f.category) pills.push(`<span class="pill warn">${esc(f.category)}</span>`);
-  } else if (kind === "not") pills.push(`<span class="pill ok">not a violation</span>`);
-  else pills.push(`<span class="pill warn">${f.rule === "SMOKE_CO" ? "please confirm" : "film again"}</span>`);
-  if (f.lead_concern) pills.push(`<span class="pill bad">possible lead-paint concern</span>`);
+    badges.push(`<span class="badge ${sevClass(f.likely_severity)}">likely severity: ${esc(f.likely_severity || "…")}</span>`);
+    if (f.category) badges.push(`<span class="badge">${esc(f.category)}</span>`);
+  } else if (kind === "not") badges.push('<span class="badge green">not a violation</span>');
+  else badges.push(`<span class="badge amber">${f.rule === "SMOKE_CO" ? "please confirm" : "film again"}</span>`);
+  if (f.lead_concern) badges.push('<span class="badge red">possible lead-paint concern</span>');
   const reason = kind === "refilm" ? (f.refilm_reason || f.explanation) : f.explanation;
-  return `<div class="card finding">
-    <img src="${esc(base + f.evidence_frame)}" alt="Evidence frame at ${esc(fmtT(f))}" data-zoom>
-    <div>
-      <h3>${esc(RULES[f.rule] || f.rule)}</h3>
-      <div>${pills.join("")}</div>
-      <p style="margin:8px 0">${esc(reason)}</p>
-      ${f.tenant_quote ? `<p class="quote" dir="auto">“${esc(f.tenant_quote)}”</p>` : ""}
-      <div class="meta">Video ${esc(fmtT(f))} · confidence ${(f.confidence * 100).toFixed(0)}% · decided by ${esc(f.decided_by)}${f.escalated ? " (re-checked)" : ""}
-        ${f.source_url ? ` · <a href="${esc(f.source_url)}" target="_blank" rel="noopener">rule source</a>` : ""}</div>
-      ${kind === "refilm" ? `<button style="margin-top:8px" onclick="restart()">${f.rule === "SMOKE_CO" ? "Film the detector" : "Film this spot again"}</button>` : ""}
-    </div></div>`;
+  const frames = f.evidence_frames || (f.evidence_frame ? [f.evidence_frame] : []);
+  return `<div class="card item">
+    <h3>${esc(RULES[f.rule] || f.rule)}</h3>
+    <div class="badges">${badges.join("")}</div>
+    <div>${esc(reason)}</div>
+    ${f.tenant_quote ? `<div class="quote" dir="auto">“${esc(f.tenant_quote)}”</div>` : ""}
+    ${thumbs(base, frames, RULES[f.rule] || f.rule)}
+    <div class="meta"><span>⏱ ${esc(fmtT(f.t_start, f.t_end))}</span><span>confidence ${(f.confidence * 100).toFixed(0)}%</span>
+      <span class="chip">${esc(DECIDED[f.decided_by] || f.decided_by)}</span>
+      ${f.source_url ? `<a href="${esc(f.source_url)}" target="_blank" rel="noopener">rule source ↗</a>` : ""}</div>
+    ${kind === "refilm" ? `<div><button onclick="newWalkthrough()">${f.rule === "SMOKE_CO" ? "Film the detector" : "Film this spot again"}</button></div>` : ""}
+  </div>`;
 }
-
-function section(listId, headId, items, base, kind, emptyMsg) {
-  $(headId).classList.toggle("hidden", !items.length && !emptyMsg);
-  $(listId).innerHTML = items.length ? items.map((f) => card(f, base, kind)).join("")
-    : (emptyMsg ? `<div class="card meta">${esc(emptyMsg)}</div>` : "");
+function reportedCard(x, base) {
+  const badge = x.visible ? '<span class="badge red">visible on video</span>' : '<span class="badge">not shown on video</span>';
+  const note = x.visible ? "" : `<div class="muted">We couldn't see this in the video (some problems, like noises or appliances that don't work, can't be filmed). It is still listed in your complaint as your report.</div>`;
+  return `<div class="card item"><h3>${esc(x.text[0].toUpperCase() + x.text.slice(1))}</h3>
+    <div class="badges">${badge}</div>
+    ${x.quote ? `<div class="quote" dir="auto">“${esc(x.quote)}”</div>` : ""}${note}
+    ${thumbs(base, x.evidence_frames, x.text)}
+    <div class="meta">${x.t_said != null ? `<span>🗣 said at ${x.t_said.toFixed(0)} s</span>` : ""}
+      ${x.visible ? `<span>⏱ ${esc(fmtT(x.t_start))}</span>` : ""}
+      ${x.p_visible != null ? `<span>P(visible) ${(x.p_visible * 100).toFixed(0)}%</span>` : ""}
+      <span class="chip">Decisions API</span></div></div>`;
+}
+function fill(listId, items, html, emptyMsg) {
+  $(listId).innerHTML = items.length ? items.map(html).join("") : `<div class="card section-empty">${esc(emptyMsg)}</div>`;
 }
 
 function renderResults(r) {
-  const h = r.household || {}, c = r.context || {}, base = r.frame_base || "";
-  const unknownFacts = !r.household || h.unknown;
+  current = r; show("s-results");
+  const base = r.frame_base || "", h = r.household || {}, c = r.context || {};
+  const unknown = !r.household || h.unknown;
   const banner = r.video_only ? "Video-only mode: spoken facts ignored"
-    : (r.no_audio ? "This video has no audio track: we couldn't hear who lives here. Please confirm the facts below." : "");
+    : r.no_audio ? "This video has no audio track: we couldn't hear who lives here. Please confirm the facts below." : "";
   $("banner").textContent = banner; $("banner").classList.toggle("hidden", !banner);
-  const kids = unknownFacts ? "unknown" : (h.children_ages || []).length ? h.children_ages.join(", ")
-    : (h.child_10_or_younger ? "a child 10 or younger" : "none mentioned");
-  const building = unknownFacts ? "unknown" : (h.building_3plus_units ? "3 or more apartments" : "fewer than 3 apartments");
+  $("working").classList.toggle("hidden", !!r.complete);
+
+  const kids = unknown ? "unknown" : (h.children_ages || []).length ? h.children_ages.join(", ")
+    : h.child_10_or_younger ? "a child 10 or younger" : "none mentioned";
   const facts = [
-    ["Children (ages)", kids], ["Building", building],
-    ["Borough", h.borough || "not said"], ["Language", h.language || "?"],
-    ["Problems you mentioned", (h.stated_problems || []).join("; ") || "none"],
-    ["Time / outdoors", `${c.local_time || "?"} · ${c.outdoor_f != null ? Math.round(c.outdoor_f) + "°F" : "unknown"}`],
+    ["Children (ages)", kids],
+    ["Building", unknown ? "unknown" : h.building_3plus_units ? "3 or more apartments" : "fewer than 3 apartments"],
+    ["Borough", h.borough || "not said"],
+    ["Problems you mentioned", (h.stated_problems || []).join("; ") || (unknown ? "—" : "none")],
+    ["Time · outdoors", `${c.local_time || "?"} · ${c.outdoor_f != null ? Math.round(c.outdoor_f) + "°F" : "unknown"}`],
   ];
+  if (r.address) facts.push(["Address", r.address]);
   if (r.thermostat) facts.push(["Thermostat", r.thermostat.indoor_f != null ? `${r.thermostat.indoor_f}°F` : "not legible"]);
   $("facts").innerHTML = facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd dir="auto">${esc(v)}</dd>`).join("")
-    + (h.needs_confirmation ? `<dt></dt><dd><span class="pill warn">please confirm these facts. We weren't sure</span></dd>` : "")
-    + (h.child_quote ? `<dt>You said</dt><dd class="quote" dir="auto">“${esc(h.child_quote)}”</dd>` : "");
+    + (h.child_quote ? `<dt>You said</dt><dd class="quote" dir="auto">“${esc(h.child_quote)}”</dd>` : "")
+    + (h.units_quote ? `<dt></dt><dd class="quote" dir="auto">“${esc(h.units_quote)}”</dd>` : "")
+    + (h.needs_confirmation ? `<dt></dt><dd><span class="badge amber">please confirm: we weren't sure about some of these</span></dd>` : "");
 
-  section("findings", "h-findings", r.findings || [], base, "finding", "No violations found in this video.");
-  section("not", "h-not", r.not_violations || [], base, "not");
-  section("refilm", "h-refilm", r.refilm || [], base, "refilm");
-  $("rights").textContent = r.rights_explanation || "";
-  $("complaint").value = r.complaint_draft_en || "";
+  fill("list-findings", r.findings || [], (f) => card(f, base, "finding"), "No violations of the checked rules found in this video.");
+  $("sec-reported").classList.toggle("hidden", !(r.reported || []).length);
+  fill("list-reported", r.reported || [], (x) => reportedCard(x, base), "");
+  $("sec-not").classList.toggle("hidden", !(r.not_violations || []).length);
+  fill("list-not", r.not_violations || [], (f) => card(f, base, "not"), "");
+  $("sec-refilm").classList.toggle("hidden", !(r.refilm || []).length);
+  fill("list-refilm", r.refilm || [], (f) => card(f, base, "refilm"), "");
+
+  $("rights").textContent = r.rights_explanation || "Writing your explanation…";
+  $("complaint").value = r.complaint_draft_en || "Writing and checking your complaint…";
+  $("b-copy").disabled = $("b-download").disabled = !r.complete;
+  $("sec-compare").classList.toggle("hidden", !!(r.video_only || r.no_audio));
   renderLog(r);
-  show("s-results");
+  if (window.onReport) window.onReport(r);
+  if (r.complete && location.hash === "#compare" && !compareJob && !r.video_only) $("b-compare").onclick();
 }
 
 let modelSummary = "";
 function renderLog(r) {
-  const log = r.model_log || { calls: [], summary: "" };
+  const log = r.model_log;
+  $("howmade").classList.toggle("hidden", !log);
+  if (!log) return;
   modelSummary = log.summary || "";
   $("log-summary").textContent = modelSummary;
   const t0 = log.calls.length ? Date.parse(log.calls[0].ts) : 0;
   $("log-calls").innerHTML = log.calls.map((x) => {
-    const clock = new Date(x.ts).toLocaleTimeString([], { hour12: false });
     const rel = ((Date.parse(x.ts) - t0) / 1000).toFixed(1);
     const q = x.questions ? ` · ${x.questions} question${x.questions === 1 ? "" : "s"}` : "";
     const retry = x.attempts > 1 ? ` · ${x.attempts} attempts` : "";
     return `<div class="call${x.ok === false ? " fail" : ""}">
-      <div class="what"><b>${esc(x.model)}</b> · ${esc(x.purpose || x.step)}</div>
-      <div>${esc(clock)} (+${rel} s) · step ${esc(x.step)}${q} · ${x.ms} ms${retry}</div>
+      <div class="what"><span class="chip">${esc(x.model)}</span> ${esc(x.purpose || x.step)}</div>
+      <div class="muted">${esc(new Date(x.ts).toLocaleTimeString([], { hour12: false }))} (+${rel} s) · ${esc(x.step)}${q} · ${x.ms} ms${retry}</div>
       <div class="out">→ ${esc(x.ok === false ? "FAILED: " + (x.error || "") : x.key_output || "")}</div></div>`;
   }).join("");
   const removed = (r.claims || []).filter((x) => !x.kept).length;
-  $("log-extra").textContent = `Frames usable: ${r.frames_usable}/${r.frames_total} · claims removed by verification: ${removed}`;
+  $("log-extra").textContent = `Frames checked: ${r.frames_usable} usable of ${r.frames_total} · complaint claims removed by verification: ${removed}`;
   $("b-log").href = (r.frame_base || "") + (log.file || "model_log.json");
-  $("b-log").setAttribute("download", "walkthrough-model-log.json");
-  if (location.hash === "#log") { $("howmade").open = true; $("howmade").scrollIntoView(); }
+  if (location.hash === "#log") { $("howmade").open = true; }
 }
 
+// ---------------- compare: same video without audio
+$("b-compare").onclick = async () => {
+  if (!job) return;
+  $("b-compare").disabled = true; $("compare-status").textContent = " Re-running without audio (frame checks reused)…";
+  try {
+    const r = await fetch(`/analyze/${job}/video_only`, { method: "POST" }); const j = await r.json();
+    if (!r.ok) throw new Error(j.detail);
+    compareJob = j.job_id;
+    while (true) {
+      await sleep(800);
+      const s = await (await fetch(`/analyze/${compareJob}`)).json();
+      if (s.status === "error") throw new Error(s.error);
+      const rep = s.report || s.partial;
+      if (rep) { renderCompare(current, rep); $("compare-status").textContent = s.status === "done" ? "" : " (finishing…)"; if (s.status === "done") break; }
+      else $("compare-status").textContent = ` Re-running without audio… ${s.running ? stageText(s.running) : ""}`;
+    }
+  } catch (e) { $("compare-status").textContent = " " + (e.message || "Comparison failed."); }
+  $("b-compare").disabled = false;
+};
+function statusMap(r) {
+  const m = {};
+  [["findings", "violation"], ["not_violations", "not a violation"], ["refilm", "film again / confirm"]].forEach(([k, label]) =>
+    (r[k] || []).forEach((f) => { m[`${f.rule}@${Math.round(f.t_start)}`] = { label, f }; }));
+  return m;
+}
+function renderCompare(a, b) {
+  const A = statusMap(a), B = statusMap(b);
+  const keys = [...new Set([...Object.keys(A), ...Object.keys(B)])].sort((x, y) => +x.split("@")[1] - +y.split("@")[1]);
+  const col = (M, other) => keys.map((k) => {
+    const it = M[k], o = other[k];
+    if (!it) return `<div class="cmp-row muted">${esc(RULES[k.split("@")[0]])} · ${k.split("@")[1]} s — not reported</div>`;
+    const diff = !o || o.label !== it.label;
+    const icon = it.label === "violation" ? "🔴" : it.label === "not a violation" ? "✅" : "⚠";
+    return `<div class="cmp-row${diff ? " diff" : ""}">${icon} <b>${esc(RULES[it.f.rule])}</b> · ${fmtT(it.f.t_start, it.f.t_end)}<br><span class="small">${esc(it.label)}</span></div>`;
+  }).join("") || '<div class="muted">nothing found</div>';
+  const nA = (a.findings || []).length, nB = (b.findings || []).length;
+  $("compare").innerHTML = `<p class="big-line">With your words: ${nA} violation${nA === 1 ? "" : "s"} · Video only: ${nB} violation${nB === 1 ? "" : "s"}</p>
+    <div class="compare"><div><h3>🗣 With what you said</h3>${col(A, B)}</div><div><h3>🎥 Video only (audio ignored)</h3>${col(B, A)}</div></div>
+    <p class="muted small">Highlighted rows changed. The frames and frame checks are identical; only the spoken facts differ.</p>`;
+  $("compare").classList.remove("hidden");
+}
+
+// ---------------- complaint actions
 $("b-copy").onclick = async () => {
-  try { await navigator.clipboard.writeText($("complaint").value); }
-  catch { $("complaint").select(); document.execCommand("copy"); }
+  try { await navigator.clipboard.writeText($("complaint").value); } catch { $("complaint").select(); document.execCommand("copy"); }
   $("b-copy").textContent = "Copied ✓"; setTimeout(() => ($("b-copy").textContent = "Copy"), 1500);
 };
 $("b-download").onclick = () => {
-  const a = document.createElement("a");
   const text = $("complaint").value + (modelSummary ? `\n\n---\nHow this report was made: ${modelSummary}\n` : "");
+  const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
   a.download = "walkthrough-complaint.txt"; a.click();
 };
 
-function restart() {
-  blob = null; $("b-analyze").disabled = true; $("rec-status").textContent = "";
-  $("playback").classList.add("hidden"); $("f-upload").value = ""; show("s-record"); window.scrollTo(0, 0);
-  history.replaceState(null, "", location.pathname);
+function newWalkthrough() {
+  job = null; compareJob = null; current = null; clearInterval(tick);
+  blob = null; $("b-analyze").disabled = true; $("rec-status").textContent = ""; $("f-upload").value = "";
+  $("playback").classList.add("hidden"); $("placeholder").classList.remove("hidden");
+  $("compare").classList.add("hidden"); $("compare").innerHTML = ""; $("sec-building").classList.add("hidden");
+  show("s-record"); history.replaceState(null, "", location.pathname); window.scrollTo(0, 0);
 }
-$("b-restart").onclick = restart; $("b-restart-err").onclick = restart;
-
-const jobParam = new URLSearchParams(location.search).get("job");
-if (jobParam) { show("s-analyzing"); renderStages([], "upload"); poll(jobParam); }
+$("b-new").onclick = newWalkthrough;
 
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-zoom]")) {
     const lb = document.createElement("div"); lb.className = "lightbox";
-    lb.innerHTML = `<img src="${esc(e.target.src)}" alt="">`; lb.onclick = () => lb.remove();
+    lb.innerHTML = `<img src="${esc(e.target.src)}" alt="${esc(e.target.alt)}">`; lb.onclick = () => lb.remove();
     document.body.appendChild(lb);
   }
 });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".lightbox").forEach((x) => x.remove()); });
+
+const jobParam = new URLSearchParams(location.search).get("job");
+if (jobParam) { startProgress(); follow(jobParam); }
 </script>
 </body>
 </html>

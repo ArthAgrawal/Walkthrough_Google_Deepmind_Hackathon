@@ -14,6 +14,13 @@ from pydantic import BaseModel
 import models
 
 
+class ReportedProblem(BaseModel):
+    """A problem the tenant mentions, with roughly when they said it."""
+    text: str            # short English phrase, e.g. "washer leaks water"
+    quote: str           # exact words, original language
+    t: float             # seconds into the video when they said it (from transcript timestamps)
+
+
 class HouseholdFacts(BaseModel):
     """Facts the tenant states about who lives in the apartment and the building."""
     language: str
@@ -23,6 +30,7 @@ class HouseholdFacts(BaseModel):
     building_3plus_units: bool
     borough: Optional[str]
     stated_problems: list[str]
+    reported_problems: list[ReportedProblem]
     needs_confirmation: bool
     child_quote: Optional[str]      # exact words (original language) supporting the child facts
     units_quote: Optional[str]      # exact words supporting the building-size fact
@@ -42,6 +50,8 @@ Rules:
   and needs_confirmation to true. If the tenant says no children live there, both are false.
 - borough: one of Manhattan, Brooklyn, Queens, Bronx, Staten Island, or null if not said.
 - stated_problems: short English phrases for problems the tenant mentions (e.g. "no heat at night").
+- reported_problems: the same problems, each with the exact quote and `t` = the [seconds] timestamp
+  of the transcript line where they said it (0 if no timestamps). At most 6, most serious first.
 - language: ISO 639-1 code of the language the tenant spoke: {language}
 - child_quote / units_quote: copy the exact words (original language) that support those facts, or null.
 - needs_confirmation: also true if anything above is ambiguous.
@@ -78,6 +88,6 @@ def unknown_facts(reason: str, language: str = "en") -> dict:
     rules.py treats `unknown: True` like video-only mode (conditions count; video can't rule them out).
     """
     return {"language": language, "child_10_or_younger": None, "child_under_6": None, "children_ages": [],
-            "building_3plus_units": None, "borough": None, "stated_problems": [],
+            "building_3plus_units": None, "borough": None, "stated_problems": [], "reported_problems": [],
             "needs_confirmation": True, "child_quote": None, "units_quote": None,
             "unknown": True, "unknown_reason": reason}
