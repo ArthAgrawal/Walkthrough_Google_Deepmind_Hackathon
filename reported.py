@@ -110,26 +110,63 @@ def object_visibility(problems: list[dict], located: dict, frame_checks: list[di
     return {p["id"]: {frames[k]["t"]: a[f"{p['id']}_{k}"].noul for k in range(len(frames))} for p in problems}
 
 
-def moments_for(said: list[float], visible: dict[float, float]) -> list[dict]:
-    """Said times snapped to where the object is visible, plus stretches where it is on screen. Max MAX_MOMENTS."""
-    vis_ts = sorted(t for t, p in visible.items() if p >= VISIBLE_P)
-    out = []
-    for t in sorted(said):
-        near = [v for v in vis_ts if t - SNAP_BEFORE_S <= v <= t + SNAP_AFTER_S]
-        out.append({"t": near[0] if near else t, "said_at": t, "object_visible": bool(near)})
+NEAR_MENTION_S = 10.0      # look for the object within ±10 s of each mention
+WHOLE_VIDEO_WINDOWS = 2    # else: best 1-2 windows anywhere in the video
+
+
+def frame_motion(frame_checks: list[dict], work_dir: Path) -> dict[float, float]:
+    """Mean abs pixel change vs the previous usable frame (64x36 grayscale): a cheap 'something is happening' score."""
+    from ingest import _thumb
+    out, prev = {}, None
+    for f in frame_checks:
+        if not f["usable"]:
+            continue
+        try:
+            px = _thumb(Path(work_dir) / f["frame_path"])
+        except Exception:
+            continue
+        out[f["t"]] = sum(abs(a - b) for a, b in zip(px, prev)) / len(px) if prev else 0.0
+        prev = px
+    return out
+
+
+def _runs(ts: list[float], gap: float = 3.0) -> list[list[float]]:
+    """Split sorted times into consecutive stretches."""
     runs, cur = [], []
-    for v in vis_ts:                                   # stretches of visibility not already covered
-        if cur and v - cur[-1] > 3.0:
+    for v in ts:
+        if cur and v - cur[-1] > gap:
             runs.append(cur)
             cur = []
         cur.append(v)
-    if cur:
-        runs.append(cur)
-    for run in runs:
-        if not any(abs(m["t"] - run[0]) < 6 or run[0] <= m["t"] <= run[-1] for m in out):
-            out.append({"t": run[0], "said_at": None, "object_visible": True})
+    return runs + ([cur] if cur else [])
+
+
+def moments_for(said: list[float], visible: dict[float, float], motion: dict[float, float] | None = None) -> list[dict]:
+    """Where to cut clips for one reported problem (max MAX_MOMENTS).
+
+    1. Each mention: the object visible within ±10 s -> the visible frame there with the most motion
+       (the item being used), ties broken by closeness to the mention.
+    2. If the object isn't near ANY mention: search the whole video; take the best 1-2 stretches where it is visible
+       (most motion first, then longest), at their most-moving frame.
+    3. Only if the object is never visible anywhere: one clip at the first mention (usually -> not_shown).
+    """
+    motion = motion or {}
+    vis_ts = sorted(t for t, p in visible.items() if p >= VISIBLE_P)
+    out = []
+    for t in sorted(said):
+        near = [v for v in vis_ts if abs(v - t) <= NEAR_MENTION_S]
+        if near:
+            best = max(near, key=lambda v: (motion.get(v, 0.0), -abs(v - t)))
+            out.append({"t": best, "said_at": t, "object_visible": True, "how": "near mention"})
+    if not out and vis_ts:
+        runs = sorted(_runs(vis_ts), key=lambda r: (max(motion.get(v, 0.0) for v in r), len(r)), reverse=True)
+        for run in runs[:WHOLE_VIDEO_WINDOWS]:
+            best = max(run, key=lambda v: motion.get(v, 0.0))
+            out.append({"t": best, "said_at": None, "object_visible": True, "how": "whole-video search"})
+    if not out and said:
+        out.append({"t": sorted(said)[0], "said_at": sorted(said)[0], "object_visible": False, "how": "never visible"})
     dedup = []
-    for m in sorted(out, key=lambda m: (not m["object_visible"], m["t"])):
+    for m in out:
         if all(abs(m["t"] - d["t"]) >= 4 for d in dedup):
             dedup.append(m)
     return sorted(dedup[:MAX_MOMENTS], key=lambda m: m["t"])
@@ -221,7 +258,7 @@ def check_one(prob: dict, located: dict, visible: dict, video: Path, work_dir: P
     """R1-R3 for one reported problem. Returns the problem with video_check, moments and evidence."""
     loc = located.get(prob["id"], {})
     said = loc.get("said_times") or ([prob["t"]] if prob.get("t") is not None else [])
-    moments = moments_for(said, visible.get(prob["id"], {}))
+    moments = moments_for(said, visible.get(prob["id"], {}), frame_motion(frame_checks, work_dir))
     chain = ["Hydrogen", "Neon"]
     results = []
     for m in moments:
