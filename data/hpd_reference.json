@@ -1,0 +1,901 @@
+{
+  "source": "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+  "dataset_url": "https://data.cityofnewyork.us/d/wvxf-dwi5",
+  "note": "Order numbers and law text copied from the official HPD data dictionary. plain_rule is a plain-language summary of that text. Severity class is assigned by HPD on inspection; we only say 'likely'.",
+  "violation_classes": {
+    "A": "Non-hazardous (least serious)",
+    "B": "Hazardous",
+    "C": "Immediately hazardous (most serious)",
+    "I": "Informational notice (no correction deadline)"
+  },
+  "tenant_rights": {
+    "CIV 14": "HPD mails the tenant a notice when the owner certifies a repair; the tenant can challenge the certification.",
+    "FALSE CERT": "If HPD re-inspects and the condition wasn't fixed, the violation stays open and the owner faces penalties for false certification."
+  },
+  "conditions": [
+    {
+      "id": "window_guard",
+      "rule_id": "WINDOW_GUARD",
+      "title": "Missing or broken window guards",
+      "hpd_orders": [
+        {
+          "order": "790",
+          "category": "WINDOW GUARDS",
+          "law_text": "§ 27-2043.1 HMC INSTALL THE MISSING OR REPAIR/REPLACE THE DEFECTIVE WINDOW GUARD(S) IN ACCORDANCE WITH THE SPECIFICATIONS OF THE NEW YORK CITY HEALTH CODE SECTION 24 RCNY CHAPTER 12."
+        },
+        {
+          "order": "791",
+          "category": "WINDOW GUARDS",
+          "law_text": "§ 27-2043.1 HMC INSTALL THE MISSING OR REPAIR/REPLACE THE DEFECTIVE WINDOW GUARD(S) THROUGHOUT THE PUBLIC AREAS IN ACCORDANCE WITH THE SPECIFICATIONS OF THE NEW YORK CITY HEALTH CODE SECTION 24 RCNY CHAPTER 12."
+        }
+      ],
+      "plain_rule": "In buildings with 3 or more apartments, the landlord must install window guards if a child 10 or younger lives in the apartment.",
+      "conditions": [
+        "window without guard visible",
+        "child_10_or_younger",
+        "building_3plus_units"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "window_visible",
+        "window_guard_installed"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/news/014-25/save-lives-install-window-guards"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "heat",
+      "rule_id": "HEAT_DAY/HEAT_NIGHT",
+      "title": "Not enough heat",
+      "hpd_orders": [
+        {
+          "order": "664",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2028, 2032 ADM CODE  PROVIDE AN ADEQUATE SUPPLY OF HEAT FROM AN APPROVED CENTRAL HEATING SYSTEM, OR AN APPROVED SYSTEM OF GAS OR ELECTRICAL HEATING IN GOOD OPERATING CONDITION FOR THE DWELLING UNIT"
+        },
+        {
+          "order": "666",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2029 ADM CODE  PROVIDE AN ADEQUATE SUPPLY OF HEAT FOR THE APARTMENT"
+        },
+        {
+          "order": "964",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2028, 2032 ADMIN.CODE:  PROVIDE AN ADEQUATE SUPPLY OF HEAT FROM AN APPROVED CENTRAL HEATING SYSTEM OR AN APPROVED SYSTEM OF GAS OR ELECTRICAL HEATING IN GOOD OPERATING CONDITION FOR THE DWELLING UNIT"
+        },
+        {
+          "order": "966",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2029  ADMIN. CODE:  PROVIDE AN ADEQUATE SUPPLY OF HEAT FOR THE APARTMENT"
+        }
+      ],
+      "plain_rule": "From Oct 1 to May 31 the landlord must keep it at least 68°F inside from 6 AM to 10 PM when it's below 55°F outside, and at least 62°F inside from 10 PM to 6 AM.",
+      "conditions": [
+        "thermostat reading",
+        "local time",
+        "outdoor temperature",
+        "Oct 1 - May 31"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "thermostat_visible",
+        "radiator_visible"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://portal.311.nyc.gov/article/?kanumber=KA-01036"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "hot_water",
+      "rule_id": "TENANT_REPORTED",
+      "title": "No hot water",
+      "hpd_orders": [
+        {
+          "order": "670",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2031 ADM CODE  PROVIDE HOT WATER AT ALL HOT WATER FIXTURES"
+        },
+        {
+          "order": "970",
+          "category": "HEAT AND HOT WATER",
+          "law_text": "§ 27-2031  ADMIN. CODE:  PROVIDE HOT WATER AT ALL HOT WATER FIXTURES"
+        },
+        {
+          "order": "577",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2024 ADM CODE  PROVIDE ADEQUATE SUPPLY OF HOT WATER FOR THE FIXTURES"
+        },
+        {
+          "order": "877",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2024 ADMIN. CODE:  PROVIDE ADEQUATE SUPPLY OF HOT WATER FOR THE FIXTURES"
+        }
+      ],
+      "plain_rule": "The landlord must provide hot water at all hot water fixtures.",
+      "conditions": [
+        "tenant reports no/insufficient hot water"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/services-and-information/heat-and-hot-water-information.page"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "cold_water",
+      "rule_id": "TENANT_REPORTED",
+      "title": "No cold water",
+      "hpd_orders": [
+        {
+          "order": "576",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2024 ADM CODE  PROVIDE ADEQUATE SUPPLY OF COLD WATER FOR THE FIXTURES"
+        },
+        {
+          "order": "876",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2024  ADMIN. CODE:  PROVIDE ADEQUATE SUPPLY OF COLD WATER FOR THE FIXTURES"
+        }
+      ],
+      "plain_rule": "The landlord must provide an adequate supply of cold water to the fixtures.",
+      "conditions": [
+        "tenant reports no/low water"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "smoke_detector",
+      "rule_id": "SMOKE_CO",
+      "title": "Missing or broken smoke detector",
+      "hpd_orders": [
+        {
+          "order": "701",
+          "category": "SMOKE DETECTING DEVICES",
+          "law_text": "§ 27-2045, 2046 ADM CODE  PROVIDE AN APPROVED AND OPERATIONAL SMOKE DETECTING DEVICE, INSTALLED IN ACCORDANCE WITH DEPARTMENT OF BUILDINGS RULES AND REGULATIONS"
+        },
+        {
+          "order": "702",
+          "category": "SMOKE DETECTING DEVICES",
+          "law_text": "§ 27-2045(B)(1)(A) HMC, § 12-01, § 12-03 RCNY REPAIR, REPLACE OR PROVIDE AN APPROVED AND OPERATIONAL SMOKE DETECTING DEVICE, INSTALLED IN ACCORDANCE WITH DEPARTMENT OF BUILDINGS RULES AND REGULATIONS"
+        },
+        {
+          "order": "1001",
+          "category": "SMOKE DETECTING DEVICES",
+          "law_text": "§ 27-2045 ADM CODE - PROVIDE AN APPROVED AND OPERATIONAL SMOKE DETECTING DEVICE, INSTALLED IN ACCORDANCE WITH DEPARTMENT OF BUILDINGS RULES AND REGULATIONS"
+        },
+        {
+          "order": "1002",
+          "category": "SMOKE DETECTING DEVICES",
+          "law_text": "§ 27-2044 ADM CODE - REPAIR OR REPLACE SMOKE DETECTOR"
+        }
+      ],
+      "plain_rule": "The landlord must provide a working, approved smoke detector.",
+      "conditions": [
+        "no smoke detector anywhere in the apartment (confirm: may be in another room)"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "ceiling_visible",
+        "smoke_detector_visible"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/news/043-22/hpd-start-heat-season-new-york-city"
+      ],
+      "notes": "Not seeing a detector in one clip is NOT proof: always 'please confirm'."
+    },
+    {
+      "id": "co_detector",
+      "rule_id": "SMOKE_CO",
+      "title": "Missing or broken carbon monoxide detector",
+      "hpd_orders": [
+        {
+          "order": "1502",
+          "category": "CARBON MONOXIDE DETECTING DEVICES",
+          "law_text": "§ 27-2046.1, 2046.2 HMC: PROVIDE AN APPROVED AND OPERATIONAL CARBON MONOXIDE DETECTING DEVICE, INSTALLED IN ACCORDANCE WITH APPLICABLE LAW AND RULES."
+        },
+        {
+          "order": "1503",
+          "category": "CARBON MONOXIDE DETECTING DEVICES",
+          "law_text": "§ 27-2045(B)(1)(B) HMC, § 12-06, § 12-07, § 12-09 RCNY REPAIR, REPLACE OR PROVIDE AN APPROVED AND OPERATIONAL CARBON MONOXIDE DETECTING DEVICE, INSTALLED IN ACCORDANCE WITH APPLICABLE LAW AND RULES"
+        }
+      ],
+      "plain_rule": "The landlord must provide a working, approved carbon monoxide detector.",
+      "conditions": [
+        "no CO detector anywhere in the apartment (confirm)"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "co_detector_visible"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/news/043-22/hpd-start-heat-season-new-york-city"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "water_leak",
+      "rule_id": "LEAK",
+      "title": "Water leak or leak damage",
+      "hpd_orders": [
+        {
+          "order": "583",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2026, 2027 HMC: PROPERLY REPAIR THE SOURCE AND ABATE THE EVIDENCE OF A WATER LEAK"
+        },
+        {
+          "order": "883",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2026, 2027 HMC: PROPERLY REPAIR THE SOURCE AND ABATE THE EVIDENCE OF A WATER LEAK"
+        },
+        {
+          "order": "578",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2026 ADM CODE  REPAIR THE LEAKY AND/OR DEFECTIVE WATER SUPPLY PIPE"
+        },
+        {
+          "order": "579",
+          "category": "WATER SUPPLY",
+          "law_text": "§ 27-2026 ADM CODE  REPAIR THE LEAKY AND/OR DEFECTIVE FAUCETS"
+        },
+        {
+          "order": "507",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  REPAIR THE ROOF SO THAT IT WILL NOT LEAK"
+        }
+      ],
+      "plain_rule": "The landlord must repair the source of a water leak and fix the damage (this includes leaky pipes, faucets and roofs).",
+      "conditions": [
+        "water stain, active drip, or tenant reports leak"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "water_stain",
+        "active_drip"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "mold",
+      "rule_id": "MOLD",
+      "title": "Mold",
+      "hpd_orders": [
+        {
+          "order": "550",
+          "category": "CLEANING",
+          "law_text": "§ 27-2017.3 HMC: TRACE AND REPAIR THE SOURCE AND ABATE THE VISIBLE MOLD CONDITION..."
+        }
+      ],
+      "plain_rule": "The landlord must find and fix the cause of visible mold and remove it (buildings with 3 or more apartments, Local Law 55).",
+      "conditions": [
+        "visible dark growth",
+        "building_3plus_units"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "dark_growth_on_surface"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page"
+      ],
+      "notes": "Never make health claims. Say 'mold condition observed'."
+    },
+    {
+      "id": "peeling_paint_lead",
+      "rule_id": "PEELING_PAINT",
+      "title": "Peeling paint (possible lead hazard)",
+      "hpd_orders": [
+        {
+          "order": "616",
+          "category": "LEAD-BASED PAINT",
+          "law_text": "§ 27-2056.6 ADM CODE - CORRECT THE LEAD-BASED PAINT HAZARD - PRESUMED LEAD PAINT THAT IS PEELING OR ON A DETERIORATED SUBSURFACE USING WORK PRACTICES SET FORTH IN 28 RCNY §11-06(B)(2)"
+        },
+        {
+          "order": "617",
+          "category": "LEAD-BASED PAINT",
+          "law_text": "§ 27-2056.6 ADM CODE - CORRECT THE LEAD-BASED PAINT HAZARD - PAINT THAT TESTED POSITIVE FOR LEAD CONTENT AND THAT IS PEELING OR ON A DETERIORATED SUBSURFACE - USING WORK PRACTICES SET FORTH IN 28 RCNY §11-06(B)(2)"
+        },
+        {
+          "order": "626",
+          "category": "LEAD-BASED PAINT",
+          "law_text": "§ 27-2056.4(A-1) - CERTIFY COMPLIANCE WITH THE REQUIREMENT TO PERFORM ONE INVESTIGATION FOR THE PRESENCE OF LEAD-BASED PAINT THROUGH XRF TESTING IN A DWELLING UNIT WITHIN ONE YEAR AFTER A CHILD UNDER AGE SIX HAS COME TO RESIDE AFTER AUGUST 9, 2020 BY SUBM"
+        }
+      ],
+      "plain_rule": "Peeling paint can be a lead paint hazard that the landlord must fix. HPD rules pay special attention when a child under 6 lives there.",
+      "conditions": [
+        "peeling paint visible",
+        "child_under_6 raises it to possible lead-paint hazard"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "peeling_paint"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/news/043-22/hpd-start-heat-season-new-york-city"
+      ],
+      "notes": "Order 616 = presumed lead paint that is peeling; order 626 references a child under age six. Say 'possible lead-paint concern', never 'lead confirmed'."
+    },
+    {
+      "id": "plaster_paint",
+      "rule_id": "PEELING_PAINT",
+      "title": "Broken plaster or bad paint",
+      "hpd_orders": [
+        {
+          "order": "508",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  REPAIR THE BROKEN OR DEFECTIVE PLASTERED SURFACES AND PAINT IN A UNIFORM COLOR"
+        },
+        {
+          "order": "808",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  REPAIR THE BROKEN OR DEFECTIVE PLASTERED SURFACES AND PAINT IN UNIFORM COLOR"
+        },
+        {
+          "order": "557",
+          "category": "PAINTING",
+          "law_text": "§ 27-2013 ADM CODE  REMOVE THE DIRTY AND/OR LOOSE PAPER AND REPAPER OR PAINT TO THE SATISFACTION OF THIS DEPARTMENT"
+        },
+        {
+          "order": "857",
+          "category": "PAINTING",
+          "law_text": "§ 27-2013 ADMIN. CODE:  REMOVE THE DIRTY AND/OR LOOSE PAPER AND REPAPER OR PAINT TO THE SATISFACTION OF THIS DEPARTMENT"
+        }
+      ],
+      "plain_rule": "The landlord must repair broken or defective plaster and paint walls/ceilings properly.",
+      "conditions": [
+        "cracked/broken plaster, peeling paint or loose wallpaper"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "peeling_paint"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "broken_fixture",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Broken or defective part of the apartment (e.g. window, door, cabinet, fixture)",
+      "hpd_orders": [
+        {
+          "order": "501",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 HMC: PROPERLY REPAIR OR REPLACE THE BROKEN OR DEFECTIVE"
+        },
+        {
+          "order": "502",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  PROPERLY REPAIR WITH SIMILAR MATERIAL THE BROKEN OR DEFECTIVE"
+        },
+        {
+          "order": "506",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  REPLACE WITH NEW THE MISSING"
+        },
+        {
+          "order": "509",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  PROPERLY SECURE THE LOOSE"
+        },
+        {
+          "order": "801",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 HMC: PROPERLY REPAIR OR REPLACE THE BROKEN OR DEFECTIVE"
+        },
+        {
+          "order": "802",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  PROPERLY REPAIR WITH SIMILAR MATERIAL THE BROKEN OR DEFECTIVE"
+        },
+        {
+          "order": "806",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  REPLACE WITH NEW THE MISSING"
+        },
+        {
+          "order": "809",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  PROPERLY SECURE THE LOOSE"
+        }
+      ],
+      "plain_rule": "The landlord must repair or replace things in the apartment that are broken, defective, missing or loose.",
+      "conditions": [
+        "broken/jammed window, broken door, loose or missing fixture"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [
+        "window_visible"
+      ],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": "General Housing Maintenance Code §27-2005 order; the inspector fills in the specific item. A window that won't open/close fits here."
+    },
+    {
+      "id": "structural",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Structural defect",
+      "hpd_orders": [
+        {
+          "order": "503",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  MAKE SAFE BY PROPERLY REPAIRING THE STRUCTURAL DEFECT"
+        },
+        {
+          "order": "803",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  MAKE SAFE BY PROPERLY REPAIRING THE STRUCTURAL DEFECT."
+        }
+      ],
+      "plain_rule": "The landlord must make structural defects safe.",
+      "conditions": [
+        "large cracks, sagging ceiling, damaged floor"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "floor_covering",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Torn or loose floor covering",
+      "hpd_orders": [
+        {
+          "order": "535",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  REMOVE THE TORN AND/OR LOOSE FLOOR COVERING"
+        },
+        {
+          "order": "835",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  REMOVE THE TORN AND/OR LOOSE FLOOR COVERING"
+        }
+      ],
+      "plain_rule": "The landlord must remove torn or loose floor covering.",
+      "conditions": [
+        "torn/loose flooring"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "toilet",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Toilet problems",
+      "hpd_orders": [
+        {
+          "order": "593",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REPAIR THE FLUSHING APPARATUS AND MAINTAIN SAME SO AS TO FLUSH EFFECTIVELY THE WATER CLOSET"
+        },
+        {
+          "order": "594",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REPAIR LEAKY WATER CLOSET FLUSH PIPE CONNECTION"
+        },
+        {
+          "order": "595",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REMOVE ALL OBSTRUCTIONS FROM WATER CLOSET"
+        },
+        {
+          "order": "591",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  RESET, SO AS TO SECURE A PROPER AND TIGHT CONNECTION, THE WATER CLOSET BOWL"
+        },
+        {
+          "order": "534",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  PROVIDE A PROPER SEAT FOR WATER CLOSET"
+        }
+      ],
+      "plain_rule": "The landlord must keep the toilet working: flushing, no leaks at the connections, no blockage, a proper seat.",
+      "conditions": [
+        "toilet won't flush, leaks, is clogged, broken seat"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "plumbing_fixture",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Broken plumbing fixture or connection",
+      "hpd_orders": [
+        {
+          "order": "596",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REPLACE THE BROKEN OR DEFECTIVE"
+        },
+        {
+          "order": "598",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REPAIR THE BROKEN OR DEFECTIVE CONNECTION"
+        },
+        {
+          "order": "649",
+          "category": "SEWERS AND DRAINAGE",
+          "law_text": "§ 27-2026 ADM CODE  REMOVE ALL OBSTRUCTIONS AND REPAIR ALL DEFECTS IN"
+        }
+      ],
+      "plain_rule": "The landlord must repair broken or defective plumbing fixtures and connections.",
+      "conditions": [
+        "broken sink/tub/pipe connection, blocked drain"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pests_roaches",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Roaches",
+      "hpd_orders": [
+        {
+          "order": "568",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF ROACHES"
+        },
+        {
+          "order": "868",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF ROACHES"
+        }
+      ],
+      "plain_rule": "The landlord must get rid of roaches.",
+      "conditions": [
+        "roaches seen or reported"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pests_mice",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Mice",
+      "hpd_orders": [
+        {
+          "order": "569",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF MICE"
+        },
+        {
+          "order": "869",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF MICE"
+        }
+      ],
+      "plain_rule": "The landlord must get rid of mice.",
+      "conditions": [
+        "mice or droppings seen or reported"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pests_rats",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Rats",
+      "hpd_orders": [
+        {
+          "order": "567",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017, 27-2017.1, 27-2017.4, 27-2017.5,  27-2017.8, 27-2019, 27-2021 HMC: ABATE THE NUISANCE CONSISTING OF EVIDENCE OF RATS AND ALL UNDERLYING CAUSES CREATING THE PEST INFESTATIONS, BY USING INTEGRATED PEST MANAGEMENT (IPM), ELIMINATE ALL BURROW ENTRY AND PASSAGEWAYS, PEST NESTS, HOLES, GAPS OR CRACKS IN WALLS, CEILINGS, FLOORS, FIXING LEAKS AND MANAGING GARBAGE IN PUBLIC AREAS. EVIDENCE FOUND AT"
+        },
+        {
+          "order": "867",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "867 (C) § 27-2017, 27-2017.1, 27-2017.4, 27-2017.5,  27-2017.8, 27-2019, 27-2021 HMC: ABATE THE NUISANCE CONSISTING OF EVIDENCE OF RATS AND ALL UNDERLYING CAUSES CONDUCIVE TO PEST INFESTATIONS, BY USING INTEGRATED PEST MANAGEMENT (IPM), ELIMINATE ALL BURROW ENTRY AND PASSAGEWAYS, PEST NESTS, HOLES, GAPS OR CRACKS IN WALLS,CEILINGS, FLOORS, FIXING LEAKS AND MANAGE GARBAGE IN PUBLIC AREAS. EVIDENCE FOUND AT"
+        }
+      ],
+      "plain_rule": "The landlord must get rid of rats and their causes.",
+      "conditions": [
+        "rats seen or reported"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5",
+        "https://www.nyc.gov/site/hpd/services-and-information/indoor-allergen-hazards-mold-and-pests.page"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pests_bedbugs",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Bedbugs",
+      "hpd_orders": [
+        {
+          "order": "570",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF BEDBUGS"
+        },
+        {
+          "order": "870",
+          "category": "EXTERMINATION & RODENT ERADICATION",
+          "law_text": "HMC ADM CODE: § 27-2017.4 ABATE THE INFESTATION CONSISTING OF BEDBUGS"
+        }
+      ],
+      "plain_rule": "The landlord must get rid of bedbugs.",
+      "conditions": [
+        "bedbugs reported"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "electric",
+      "rule_id": "TENANT_REPORTED",
+      "title": "No electricity or unsafe wiring",
+      "hpd_orders": [
+        {
+          "order": "688",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2037, 2038 HMC: PROVIDE A SAFE AND ADEQUATE SUPPLY OF ELECTRIC SERVICE TO THE FIXTURES"
+        },
+        {
+          "order": "689",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2005, 2006, 2037 HMC: PROPERLY REPAIR AND ABATE UNSAFE ELECTRIC WIRING CONDITION CONSISTING OF"
+        },
+        {
+          "order": "988",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2037, 2038 HMC: PROVIDE A SAFE AND ADEQUATE SUPPLY OF ELECTRIC SERVICE TO THE FIXTURES"
+        },
+        {
+          "order": "989",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2005, 2006, 2037 HMC: PROPERLY REPAIR AND ABATE UNSAFE ELECTRIC WIRING CONDITION CONSISTING OF"
+        }
+      ],
+      "plain_rule": "The landlord must provide safe electric service and fix unsafe wiring.",
+      "conditions": [
+        "exposed wires, outlets not working, no power"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "lighting",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Missing lighting",
+      "hpd_orders": [
+        {
+          "order": "684",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2037 ADM CODE  PROVIDE ADEQUATE LIGHTING"
+        },
+        {
+          "order": "681",
+          "category": "ARTIFICIAL LIGHTING",
+          "law_text": "§ 27-2037 ADM CODE  PROVIDE A PROPER MEANS OF LIGHTING FOR WATER CLOSET COMPARTMENT"
+        }
+      ],
+      "plain_rule": "The landlord must provide adequate lighting where required (e.g. the bathroom).",
+      "conditions": [
+        "no working light fixture"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "gas",
+      "rule_id": "TENANT_REPORTED",
+      "title": "No cooking gas",
+      "hpd_orders": [
+        {
+          "order": "742",
+          "category": "KITCHEN AND KITCHENETTES",
+          "law_text": "§ 27-2070 ADM CODE  PROVIDE AN ADEQUATE SUPPLY OF GAS TO THE FIXTURES"
+        },
+        {
+          "order": "1042",
+          "category": "KITCHEN AND KITCHENETTES",
+          "law_text": "§ 27-2073 ADM CODE - PROVIDE AN ADEQUATE SUPPLY OF GAS TO THE FIXTURES"
+        }
+      ],
+      "plain_rule": "The landlord must provide an adequate supply of gas to the fixtures.",
+      "conditions": [
+        "stove has no gas at all"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "gas_co",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Gas appliance problem that could cause carbon monoxide",
+      "hpd_orders": [
+        {
+          "order": "511",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADM CODE  REPAIR AND OPERATE THE GAS APPLIANCE SO AS TO PREVENT CARBON MONOXIDE"
+        },
+        {
+          "order": "811",
+          "category": "MAINTENANCE",
+          "law_text": "§ 27-2005 ADMIN. CODE:  REPAIR AND OPERATE THE GAS APPLIANCE SO AS TO PREVENT CARBON MONOXIDE"
+        }
+      ],
+      "plain_rule": "The landlord must repair gas appliances so they don't cause carbon monoxide.",
+      "conditions": [
+        "gas appliance burning badly, smell"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "door_lock",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Entrance door lock or peephole",
+      "hpd_orders": [
+        {
+          "order": "692",
+          "category": "PROTECTIVE DEVICES AND FIRE PROTECTION",
+          "law_text": "§ 27-2043 ADM CODE  PROVIDE A LOCK AND KEY TO THE ENTRANCE DOOR OF DWELLING UNIT AND, IF A CL A MULTIPLE DWELLING, ALSO"
+        },
+        {
+          "order": "690",
+          "category": "PROTECTIVE DEVICES AND FIRE PROTECTION",
+          "law_text": "§ 27-2041 ADM CODE  PROVIDE A PEEP HOLE IN ENTRANCE DOOR OF THE DWELLING UNIT SO LOCATED SO AS TO PERMIT A PERSON INSIDE THE DWELLING TO VIEW ANY PERSON OUTSIDE ENTRANCE DOOR"
+        },
+        {
+          "order": "992",
+          "category": "PROTECTIVE DEVICES AND FIRE PROTECTION",
+          "law_text": "§ 27-2043  ADMIN. CODE:  PROVIDE A LOCK AND KEY TO THE ENTRANCE DOOR OF DWELLING UNIT"
+        },
+        {
+          "order": "990",
+          "category": "PROTECTIVE DEVICES AND FIRE PROTECTION",
+          "law_text": "§ 27-2041  ADMIN. CODE:  PROVIDE A PEEP HOLE IN ENTRANCE DOOR OF THE DWELLING UNIT SO LOCATED AS TO PERMIT A PERSON INSIDE THE DWELLING UNIT TO VIEW ANY PERSON OUTSIDE ENTRANCE DOOR"
+        }
+      ],
+      "plain_rule": "The landlord must provide a lock and key and a peephole on the apartment entrance door.",
+      "conditions": [
+        "missing/broken lock or peephole"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "self_closing_door",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Self-closing door broken",
+      "hpd_orders": [
+        {
+          "order": "693",
+          "category": "PROTECTIVE DEVICES AND FIRE PROTECTION",
+          "law_text": "§ 27-2044, 2041.1 HMC: §238 MDL and 28 RCNY §25-171: REPLACE OR REPAIR THE SELF-CLOSING THE DOORS THAT IS MISSING OR DEFECTIVE"
+        }
+      ],
+      "plain_rule": "The landlord must repair or replace a missing or defective self-closing door.",
+      "conditions": [
+        "entrance door doesn't close on its own"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "dirty_common",
+      "rule_id": "TENANT_REPORTED",
+      "title": "Garbage or unsanitary conditions",
+      "hpd_orders": [
+        {
+          "order": "552",
+          "category": "CLEANING",
+          "law_text": "§ 27-2010, 2011, 2012 ADM CODE  REMOVE THE ACCUMULATION OF REFUSE AND/OR RUBBISH AND MAINTAIN IN A CLEAN CONDITION THE"
+        },
+        {
+          "order": "551",
+          "category": "CLEANING",
+          "law_text": "§ 27-2010, 2011, 2012 ADM CODE  CLEANSE AND DISINFECT TO THE SATISFACTION OF THIS DEPARTMENT AFTER REMOVING THE"
+        }
+      ],
+      "plain_rule": "The landlord must remove garbage build-up and keep areas clean.",
+      "conditions": [
+        "garbage accumulation in building areas"
+      ],
+      "owner_responsible": "yes",
+      "visual_cues": [],
+      "sources": [
+        "HPD Housing Maintenance Code Violations data dictionary (Order Number tab), https://data.cityofnewyork.us/d/wvxf-dwi5"
+      ],
+      "notes": ""
+    }
+  ],
+  "not_covered_or_unclear": [
+    {
+      "id": "appliance_not_owner_supplied",
+      "title": "Appliances the tenant owns (e.g. their own washer, dishwasher)",
+      "verdict": "likely_not_violation",
+      "plain_rule": "If the tenant bought the appliance, the landlord usually doesn't have to fix it. If the landlord supplied it, ask them to repair it.",
+      "notes": "The Order Number list has no order for washers/dishwashers. Mark 'unclear' unless the tenant says who owns it. A LEAK from it can still be a water-leak issue."
+    },
+    {
+      "id": "stove_burner",
+      "title": "One stove burner not working",
+      "verdict": "unclear",
+      "plain_rule": "A broken part of a landlord-supplied stove may fall under 'repair the broken or defective' item; no specific order exists for a single burner.",
+      "notes": "Map to broken_fixture (501) if the stove came with the apartment; say 'likely' at most."
+    },
+    {
+      "id": "noise_slow",
+      "title": "Noisy or slow appliance",
+      "verdict": "likely_not_violation",
+      "plain_rule": "Noise or slowness alone isn't listed as a housing code violation. You can still ask your landlord.",
+      "notes": "No matching order number."
+    }
+  ]
+}
